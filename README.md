@@ -136,21 +136,7 @@
 
 > 首次构建需联网拉取依赖；若本地已有 Gradle 缓存，可加 `--offline` 加速。
 
----
-
-## 版本与下载
-
-APK 发布在 [Releases](../../releases) 页面，资产命名形如 `tieba-v1.6.5.apk`。
-
-| 版本 | 说明 |
-|---|---|
-| v1.6.5 | 修复「TA 的回帖」；降级镜像数据源；作者信息透传 |
-| v1.6.4 | 修复「查人」显示 ID 与复制 ID 不一致的问题 |
-| v1.6.0 | 新增「查人」页与主页第三个 Tab |
-| v1.5.0 | 新增「我的贴吧」聚合页 |
-
----
-
+--
 ## 开源协议
 
 本项目基于 **GNU General Public License v3.0（GPL-3.0）** 发布，完整条款见 [LICENSE](./LICENSE)。
@@ -196,25 +182,7 @@ GNU General Public License for more details.
 | 项目 | 作者 | 说明 |
 |---|---|---|
 | [Starry-OvO/aiotieba](https://github.com/Starry-OvO/aiotieba) | [@Starry-OvO](https://github.com/Starry-OvO) | 异步贴吧客户端库，接口行为的重要参考 |
-| [n0099/tbclient.protobuf](https://github.com/n0099/tbclient.protobuf) | [@n0099](https://github.com/n0099) | 百度贴吧 Protobuf 定义文件合集，让协议层得以被理解 |
-
-### 开源依赖
-
-感谢以下开源项目（部分列举）：
-
-- [**Jetpack Compose**](https://developer.android.com/jetpack/compose) · [**AndroidX**](https://developer.android.com/jetpack) —— Google
-- [**Kotlin**](https://kotlinlang.org/) · [**kotlinx.serialization**](https://github.com/Kotlin/kotlinx.serialization) · [**kotlinx.coroutines**](https://github.com/Kotlin/kotlinx.coroutines) —— JetBrains
-- [**Wire**](https://github.com/square/wire) · [**OkHttp**](https://github.com/square/okhttp) · [**Retrofit**](https://github.com/square/retrofit) —— Square
-- [**Hilt / Dagger**](https://dagger.dev/hilt/) —— Google / Square
-- [**Room**](https://developer.android.com/training/data-storage/room) —— Google
-- [**Glide**](https://github.com/bumptech/glide) —— Bumptech
-- [**Sketch**](https://github.com/panpf/sketch) —— panpf
-- [**Lottie**](https://github.com/airbnb/lottie-android) —— Airbnb
-- [**Compose Destinations**](https://github.com/raamcosta/compose-destinations) —— raamcosta
-- [**Accompanist**](https://github.com/google/accompanist) —— Google
-- [**Godaddy Compose Color Picker**](https://github.com/godaddy/compose-color-picker) —— GoDaddy
-- [**Semver**](https://github.com/swiftzer/semver) —— swiftzer
-
+| [n0099/tbclient.protobuf](https://github.com/n0099/tbclient.protobuf) | [@n0099](https://github.com/n0099) | 百度贴吧 Protobuf 
 ### 社区
 
 感谢所有实测反馈、提交 Issue 与建议的用户 —— 每一个 bug 报告都在让这个客户端变得更好。
