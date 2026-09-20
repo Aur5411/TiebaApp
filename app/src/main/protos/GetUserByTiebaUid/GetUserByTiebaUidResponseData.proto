@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package tieba.getUserByTiebaUid;
+
+option java_package = "com.huanchengfly.tieba.post.api.models.protos.getUserByTiebaUid";
+
+import "User.proto";
+
+message GetUserByTiebaUidResponseData {
+  User user = 1;
+}

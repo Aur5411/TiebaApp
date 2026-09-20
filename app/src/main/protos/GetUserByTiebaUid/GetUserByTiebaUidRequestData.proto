@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package tieba.getUserByTiebaUid;
+
+option java_package = "com.huanchengfly.tieba.post.api.models.protos.getUserByTiebaUid";
+
+import "CommonRequest.proto";
+
+message GetUserByTiebaUidRequestData {
+  CommonRequest common = 1;
+  string tieba_uid = 2;
+}

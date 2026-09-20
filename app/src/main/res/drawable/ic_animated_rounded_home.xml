@@ -1,0 +1,45 @@
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt">
+    <aapt:attr name="android:drawable">
+        <vector
+            android:name="vector"
+            android:width="960dp"
+            android:height="960dp"
+            android:viewportWidth="960"
+            android:viewportHeight="960">
+            <group
+                android:name="grp"
+                android:pivotX="480"
+                android:pivotY="480"
+                android:scaleX="1"
+                android:scaleY="1">
+                <path
+                    android:name="path"
+                    android:fillColor="#000"
+                    android:fillType="evenOdd"
+                    android:pathData="M400,800 L400,560 L560,560 L560,800 L760,800 L760,480 L880,480 L480,120 L80,480 L200,480 L200,800 Z"
+                    android:strokeWidth="1" />
+            </group>
+        </vector>
+    </aapt:attr>
+    <target android:name="grp">
+        <aapt:attr name="android:animation">
+            <set android:ordering="together">
+                <objectAnimator
+                    android:duration="220"
+                    android:interpolator="@android:interpolator/fast_out_slow_in"
+                    android:propertyName="scaleX"
+                    android:valueFrom="0.82"
+                    android:valueTo="1.0"
+                    android:valueType="floatType" />
+                <objectAnimator
+                    android:duration="220"
+                    android:interpolator="@android:interpolator/fast_out_slow_in"
+                    android:propertyName="scaleY"
+                    android:valueFrom="0.82"
+                    android:valueTo="1.0"
+                    android:valueType="floatType" />
+            </set>
+        </aapt:attr>
+    </target>
+</animated-vector>

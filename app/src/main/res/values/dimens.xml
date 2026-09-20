@@ -1,0 +1,15 @@
+<resources>
+    <dimen name="app_bar_elevation">0dp</dimen>
+    <dimen name="space_toolbar_top">45dp</dimen>
+
+    <dimen name="radius">8dp</dimen>
+    <dimen name="size_avatar_small">36dp</dimen>
+
+    <dimen name="card_margin">12dp</dimen>
+
+    <dimen name="permission_dialog_margin">16dp</dimen>
+    <dimen name="permission_dialog_padding">20dp</dimen>
+    <dimen name="permission_dialog_icon_size">40dp</dimen>
+    <dimen name="permission_dialog_button_height">52dp</dimen>
+
+</resources>

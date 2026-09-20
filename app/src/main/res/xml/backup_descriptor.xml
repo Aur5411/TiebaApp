@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content xmlns:tools="http://schemas.android.com/tools">
+    <exclude
+        domain="sharedpref"
+        path="crash.xml" />
+    <exclude
+        domain="file"
+        path="error"
+        tools:ignore="FullBackupContent" />
+</full-backup-content>
