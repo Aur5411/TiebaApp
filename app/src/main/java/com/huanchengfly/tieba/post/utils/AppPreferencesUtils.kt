@@ -186,25 +186,21 @@ open class AppPreferencesUtils private constructor(ctx: Context) {
     )
 
     /**
-     * 发贴回贴风险提示开关。
+     * 安全模式（只读开关）。
      *
-     * 默认关闭：仅在用户首次发贴/回贴时主动弹一次，之后不再打扰。
-     * 用户可在「设置 - 习惯设置」中自行开启以恢复每次提示。
+     * 开启后，本 App 会拦截发贴、回贴、签到、点赞、关注等所有写操作，仅保留浏览功能，
+     * 用于最大程度规避第三方客户端写操作带来的封号风险。
+     * 在「设置 - 习惯设置」中切换。
      */
-    var postOrReplyWarning by DataStoreDelegates.boolean(
-        defaultValue = false,
-        key = "postOrReplyWarning"
-    )
+    var safeMode by DataStoreDelegates.boolean(defaultValue = false)
 
     /**
-     * 发贴回贴风险提示「首次主动弹出」标记。
+     * 是否显示有风险的功能入口（发贴 / 回贴 / 签到 / 点赞 / 关注 / 收藏 / 编辑资料等）。
      *
-     * 仅用于实现「第一次发贴/回贴时主动弹一次」的行为，与上面的开关相互独立。
+     * 默认 false：隐藏这些写操作入口，配合安全模式形成只读保护。
+     * 在「设置 - 习惯设置」中打开该开关后，会自动重启应用使隐藏的入口恢复显示。
      */
-    var hasShownPostOrReplyWarning by DataStoreDelegates.boolean(
-        defaultValue = false,
-        key = "has_shown_post_or_reply_warning"
-    )
+    var showRiskyFeatures by DataStoreDelegates.boolean(defaultValue = false)
 
     var radius by DataStoreDelegates.int(defaultValue = 8)
 

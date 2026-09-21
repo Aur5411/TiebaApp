@@ -661,7 +661,10 @@ fun ForumPage(
                     )
                 },
                 floatingActionButton = {
-                    if (context.appPreferences.forumFabFunction != "hide" || (context.appPreferences.hideReply == true && context.appPreferences.forumFabFunction == "post")) {
+                    if (context.appPreferences.forumFabFunction != "hide"
+                        && !(context.appPreferences.forumFabFunction == "post"
+                            && (context.appPreferences.hideReply || !context.appPreferences.showRiskyFeatures))
+                    ) {
                         FloatingActionButton(
                             onClick = {
                                 when (context.appPreferences.forumFabFunction) {
@@ -704,6 +707,9 @@ fun ForumPage(
                                     }
 
                                     else -> {
+                                        if (context.appPreferences.hideReply || !context.appPreferences.showRiskyFeatures) {
+                                            return@FloatingActionButton
+                                        }
                                         coroutineScope.launch {
                                             emitGlobalEvent(
                                                 ForumThreadListUiEvent.AddThread(forumName)

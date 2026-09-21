@@ -317,6 +317,8 @@ internal fun ReplyPageContent(
         }
     }
 
+    val warningDialogState = rememberDialogState()
+    var safeModeDialogOnOpen by remember { mutableStateOf(false) }
     var waitUploadSuccessToSend by remember { mutableStateOf(false) }
     viewModel.onEvent<ReplyUiEvent.UploadSuccess> {
         if (waitUploadSuccessToSend) {
@@ -650,6 +652,11 @@ internal fun ReplyPageContent(
             } else {
                 IconButton(
                     onClick = {
+                        if (context.appPreferences.safeMode || !context.appPreferences.showRiskyFeatures) {
+                            safeModeDialogOnOpen = false
+                            warningDialogState.show()
+                            return@IconButton
+                        }
                         val replyContent = if (subPostId == null || subPostId == 0L) {
                             getText()
                         } else {
@@ -779,42 +786,55 @@ internal fun ReplyPageContent(
         }
     }
 
-    val warningDialogState = rememberDialogState()
     Dialog(
         dialogState = warningDialogState,
-        title = { Text(text = stringResource(id = R.string.title_dialog_reply_warning)) },
+        title = {
+            Text(
+                text = if (context.appPreferences.safeMode) {
+                    stringResource(id = R.string.title_dialog_safe_mode)
+                } else {
+                    stringResource(id = R.string.title_dialog_risky_hidden)
+                }
+            )
+        },
         buttons = {
             DialogPositiveButton(
-                text = stringResource(id = R.string.button_official_client_reply),
+                text = stringResource(id = R.string.btn_use_official_client),
                 onClick = { launchOfficialApp() }
             )
-            DialogNegativeButton(text = stringResource(id = R.string.btn_continue_reply))
+            if (context.appPreferences.safeMode) {
+                DialogNegativeButton(
+                    text = stringResource(id = R.string.btn_turn_off_safe_mode),
+                    onClick = {
+                        context.appPreferences.safeMode = false
+                        context.toastShort(R.string.toast_safe_mode_disabled)
+                    }
+                )
+            }
             DialogNegativeButton(
-                text = stringResource(id = R.string.btn_cancel_reply),
-                onClick = { onBack() }
-            )
-            DialogNegativeButton(
-                text = stringResource(id = R.string.btn_no_more_post_or_reply_warning),
+                text = stringResource(id = R.string.btn_cancel_safe_mode),
                 onClick = {
-                    context.appPreferences.postOrReplyWarning = false
-                    context.toastShort(R.string.toast_post_or_reply_warning_disabled)
+                    if (safeModeDialogOnOpen) {
+                        onBack()
+                    }
                 }
             )
         },
     ) {
         Text(
-            text = stringResource(id = R.string.message_dialog_reply_warning),
+            text = if (context.appPreferences.safeMode) {
+                stringResource(id = R.string.message_dialog_safe_mode)
+            } else {
+                stringResource(id = R.string.message_dialog_risky_hidden)
+            },
             modifier = Modifier.padding(horizontal = 24.dp)
         )
     }
 
-    // 默认关闭：仅在首次发贴/回贴时主动弹一次，之后完全由设置中的开关控制
+    // 只读保护：安全模式开启或「显示有风险的功能」未开启时，进入本页面即弹出提示；发送操作同样会被拦截
     LaunchedEffect(Unit) {
-        val appPreferences = context.appPreferences
-        if (!appPreferences.hasShownPostOrReplyWarning) {
-            appPreferences.hasShownPostOrReplyWarning = true
-            warningDialogState.show()
-        } else if (appPreferences.postOrReplyWarning) {
+        if (context.appPreferences.safeMode || !context.appPreferences.showRiskyFeatures) {
+            safeModeDialogOnOpen = true
             warningDialogState.show()
         }
     }

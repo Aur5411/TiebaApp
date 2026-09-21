@@ -1,5 +1,10 @@
 package com.huanchengfly.tieba.post.ui.page.settings.habit
 
+import android.content.Context
+import android.content.Intent
+import android.os.Handler
+import android.os.Looper
+import android.widget.Toast
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.ExperimentalMaterialApi
@@ -19,6 +24,7 @@ import androidx.compose.material.icons.outlined.SecurityUpdateWarning
 import androidx.compose.material.icons.outlined.SpeakerNotesOff
 import androidx.compose.material.icons.outlined.StarOutline
 import androidx.compose.material.icons.outlined.Verified
+import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.WatchLater
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -319,9 +325,31 @@ fun HabitSettingsPage(
             }
             prefsItem {
                 SwitchPref(
-                    key = "postOrReplyWarning",
-                    title = stringResource(id = R.string.title_post_or_reply_warning),
-                    summary = stringResource(id = R.string.summary_post_or_reply_warning),
+                    key = "showRiskyFeatures",
+                    title = stringResource(id = R.string.title_show_risky_features),
+                    summary = stringResource(id = R.string.summary_show_risky_features),
+                    defaultChecked = false,
+                    onCheckedChange = {
+                        Toast.makeText(context, R.string.toast_restart_app, Toast.LENGTH_SHORT).show()
+                        Handler(Looper.getMainLooper()).postDelayed({
+                            restartApp(context)
+                        }, 800)
+                    },
+                ) {
+                    LeadingIcon {
+                        AvatarIcon(
+                            icon = Icons.Outlined.Visibility,
+                            size = Sizes.Small,
+                            contentDescription = null,
+                        )
+                    }
+                }
+            }
+            prefsItem {
+                SwitchPref(
+                    key = "safeMode",
+                    title = stringResource(id = R.string.title_safe_mode),
+                    summary = stringResource(id = R.string.summary_safe_mode),
                     defaultChecked = false,
                 ) {
                     LeadingIcon {
@@ -376,4 +404,17 @@ fun HabitSettingsPage(
             }
         }
     }
+}
+
+/**
+ * 重启应用：先以 NEW_TASK | CLEAR_TASK 启动 Launcher Intent，再结束当前进程。
+ * 用于「显示有风险的功能」开关切换后立即生效（UI 入口显隐需要重新组合）。
+ */
+private fun restartApp(context: Context) {
+    val intent = context.packageManager.getLaunchIntentForPackage(context.packageName)
+    intent?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+    if (intent != null) {
+        context.startActivity(intent)
+    }
+    Runtime.getRuntime().exit(0)
 }

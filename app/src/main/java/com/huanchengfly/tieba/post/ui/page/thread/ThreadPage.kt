@@ -1948,7 +1948,9 @@ private fun BottomBar(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            if (user.get { is_login } == 1 && !LocalContext.current.appPreferences.hideReply) {
+            if (user.get { is_login } == 1 && !LocalContext.current.appPreferences.hideReply
+                && LocalContext.current.appPreferences.showRiskyFeatures
+            ) {
                 Avatar(
                     data = StringUtil.getAvatarUrl(user.get { portrait }),
                     size = Sizes.Tiny,
@@ -2073,7 +2075,9 @@ fun PostCard(
             indication = null,
             onClick = {
                 onReplyClick(post)
-            }.takeIf { !context.appPreferences.hideReply && account != null },
+            }.takeIf {
+                !context.appPreferences.hideReply && context.appPreferences.showRiskyFeatures && account != null
+            },
             menuContent = {
                 if (onMenuCopyClick != null) {
                     DropdownMenuItem(
@@ -2088,7 +2092,7 @@ fun PostCard(
                     }
                 }
                 if (account != null) {
-                    if (!context.appPreferences.hideReply) {
+                    if (!context.appPreferences.hideReply && context.appPreferences.showRiskyFeatures) {
                         DropdownMenuItem(
                             onClick = {
                                 onReplyClick(post)
@@ -2316,7 +2320,7 @@ private fun SubPostItem(
                 }
             }
             if (LocalAccount.current != null) {
-                if (!context.appPreferences.hideReply) {
+                if (!context.appPreferences.hideReply && context.appPreferences.showRiskyFeatures) {
                     DropdownMenuItem(
                         onClick = {
                             onReplyClick?.invoke(subPostList.get())

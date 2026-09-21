@@ -27,7 +27,7 @@ const val BOUNDARY = "--------7da3d81520810*"
 
 fun buildProtobufRequestBody(
     data: Message<*, *>,
-    clientVersion: ClientVersion = ClientVersion.TIEBA_V11,
+    clientVersion: ClientVersion = ClientVersion.TIEBA_V12,
     needSToken: Boolean = true,
 ): MyMultipartBody {
     return MyMultipartBody.Builder(BOUNDARY)
@@ -69,7 +69,7 @@ fun buildAppPosInfo(): AppPosInfo {
 
 fun buildCommonRequest(
     context: Context = App.INSTANCE,
-    clientVersion: ClientVersion = ClientVersion.TIEBA_V11,
+    clientVersion: ClientVersion = ClientVersion.TIEBA_V12,
     bduss: String? = null,
     stoken: String? = null,
     tbs: String? = null,

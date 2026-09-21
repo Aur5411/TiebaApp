@@ -21,6 +21,7 @@ import com.huanchengfly.tieba.post.api.retrofit.interceptors.DropInterceptor
 import com.huanchengfly.tieba.post.api.retrofit.interceptors.FailureResponseInterceptor
 import com.huanchengfly.tieba.post.api.retrofit.interceptors.ForceLoginInterceptor
 import com.huanchengfly.tieba.post.api.retrofit.interceptors.ProtoFailureResponseInterceptor
+import com.huanchengfly.tieba.post.api.retrofit.interceptors.SafeModeInterceptor
 import com.huanchengfly.tieba.post.api.retrofit.interceptors.SortAndSignInterceptor
 import com.huanchengfly.tieba.post.api.retrofit.interceptors.StParamInterceptor
 import com.huanchengfly.tieba.post.api.retrofit.interfaces.AppHybridTiebaApi
@@ -79,6 +80,7 @@ object RetrofitTiebaApi {
         )
     private val gsonConverterFactory = GsonConverterFactory.create()
     private val sortAndSignInterceptor = SortAndSignInterceptor("tiebaclient!!!")
+    private val safeModeInterceptor = SafeModeInterceptor()
 
     val NEW_TIEBA_API: NewTiebaApi by lazy {
         createJsonApi<NewTiebaApi>(
@@ -178,7 +180,7 @@ object RetrofitTiebaApi {
         createJsonApi<OfficialTiebaApi>(
             "http://c.tieba.baidu.com/",
             CommonHeaderInterceptor(
-                Header.USER_AGENT to { "bdtb for Android 12.41.7.1" },
+                Header.USER_AGENT to { "bdtb for Android ${ClientVersion.TIEBA_V12.version}" },
                 Header.COOKIE to { "CUID=${CuidUtils.getNewCuid()};ka=open;TBBRAND=${Build.MODEL};BAIDUID=${ClientUtils.baiduId};" },
                 Header.CUID to { CuidUtils.getNewCuid() },
                 Header.CUID_GALAXY2 to { CuidUtils.getNewCuid() },
@@ -216,7 +218,7 @@ object RetrofitTiebaApi {
                 Param.START_SCHEME to { "" },
                 Param.START_TYPE to { "1" },
                 Param.SWAN_GAME_VER to { "1038000" },
-                Param.CLIENT_VERSION to { "12.41.7.1" },
+                Param.CLIENT_VERSION to { ClientVersion.TIEBA_V12.version },
                 Param.CUID_GALAXY3 to { UIDUtil.getAid() },
                 Param.OAID to { OAID().toJson() },
             ),
@@ -236,7 +238,7 @@ object RetrofitTiebaApi {
                 Header.CUID_GALAXY2 to { CuidUtils.getNewCuid() },
                 Header.CUID_GID to { "" },
                 Header.CUID_GALAXY3 to { UIDUtil.getAid() },
-                Header.USER_AGENT to { "bdtb for Android ${ClientVersion.TIEBA_V11.version}" },
+                Header.USER_AGENT to { "bdtb for Android ${ClientVersion.TIEBA_V12.version}" },
                 Header.X_BD_DATA_TYPE to { "protobuf" },
             ),
             defaultCommonParamInterceptor - Param.OS_VERSION + CommonParamInterceptor(
@@ -244,7 +246,7 @@ object RetrofitTiebaApi {
                 Param.CUID_GALAXY2 to { CuidUtils.getNewCuid() },
                 Param.CUID_GID to { "" },
                 Param.FROM to { "tieba" },
-                Param.CLIENT_VERSION to { ClientVersion.TIEBA_V11.version },
+                Param.CLIENT_VERSION to { ClientVersion.TIEBA_V12.version },
                 Param.CUID_GALAXY3 to { UIDUtil.getAid() },
                 Param.OAID to { OAID().toJson() },
             ),
@@ -404,6 +406,7 @@ object RetrofitTiebaApi {
             interceptors.forEach {
                 addInterceptor(it)
             }
+            addInterceptor(safeModeInterceptor)
             addInterceptor(DropInterceptor)
             addInterceptor(FailureResponseInterceptor)
             addInterceptor(ForceLoginInterceptor)
@@ -430,6 +433,7 @@ object RetrofitTiebaApi {
             interceptors.forEach {
                 addInterceptor(it)
             }
+            addInterceptor(safeModeInterceptor)
             addInterceptor(DropInterceptor)
             addInterceptor(ProtoFailureResponseInterceptor)
             addInterceptor(ForceLoginInterceptor)
