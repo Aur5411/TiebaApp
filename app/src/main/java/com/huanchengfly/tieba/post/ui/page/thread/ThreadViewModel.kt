@@ -967,13 +967,22 @@ sealed interface ThreadPartialChange : PartialChange<ThreadUiState> {
                         }
 
                         hasNewPost -> {
+                            // 非连续场景（例如只看了一页就回帖）：把新回复（以及同页其他最新回复）
+                            // 合并进 data 的末尾（升序）/ 开头（倒序），而不是塞进 latestPosts 单独分区，
+                            // 否则「跳转我的楼层」只会滚到主帖子列表底部，停在「以下是最新回复」分隔线之上，
+                            // 永远到不了刚回的那一层楼。
+                            val merged = if (isDesc) {
+                                (addPosts.reversed() + newPost)
+                            } else {
+                                (newPost + addPosts)
+                            }
                             oldState.copy(
                                 isLoadingLatestReply = false,
                                 isError = false,
                                 error = null,
                                 anti = anti.wrapImmutable(),
-                                data = newPost.toImmutableList(),
-                                latestPosts = posts.toImmutableList(),
+                                data = merged.toImmutableList(),
+                                latestPosts = persistentListOf(),
                             )
                         }
 

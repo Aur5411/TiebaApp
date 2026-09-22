@@ -707,17 +707,31 @@ fun ThreadPage(
     }
     viewModel.onEvent<ThreadUiEvent.ScrollToLatestReply> {
         if (curSortType != ThreadSortType.SORT_TYPE_DESC) {
-            lazyListState.animateScrollToItem(2 + data.size)
+            // 新回复已并入 data 末尾（非倒序，见 ThreadViewModel.LoadMyLatestReply.Success），
+            // 滚到最后一个 data 项即可精确停在自己刚回的那一层楼。
+            lazyListState.animateScrollToItem((2 + data.size - 1).coerceAtLeast(0))
         } else {
-            lazyListState.animateScrollToItem(1)
+            // 倒序时新回复在 data 开头（index 2），滚到楼主正文下方即露出刚回的楼层。
+            lazyListState.animateScrollToItem(2)
         }
     }
     viewModel.onEvent<ThreadUiEvent.LoadSuccess> {
         if (it.page > 1 || waitLoadSuccessAndScrollToFirstReply) {
             waitLoadSuccessAndScrollToFirstReply = false
-            // 注意：只有「点回复数」这种明确要求看回复的场景（scrollToReply=true）才跳楼层。
-            // 直接点帖子进来时 scrollToReply=false，必须停在楼主正文，绝不能自动跳到评论区。
-            lazyListState.animateScrollToItem(1)
+            if (scrollToReply && postId != 0L) {
+                // 带了具体楼层 pid：精确滚到该楼层，使其带上下的楼层上下文 + 楼中楼都可见，
+                // 而不是只停在评论区顶部（item 1）。
+                val targetIndex = data.indexOfFirst { it.post.get { id } == postId }
+                if (targetIndex >= 0) {
+                    lazyListState.animateScrollToItem(2 + targetIndex)
+                } else {
+                    lazyListState.animateScrollToItem(1)
+                }
+            } else {
+                // 注意：普通「点回复数 / 跳到评论区」（scrollToReply=false 或没带 pid）才停在楼主正文下方第一条回复处。
+                // 直接点帖子进来时 scrollToReply=false，必须停在楼主正文，绝不能自动跳到评论区。
+                lazyListState.animateScrollToItem(1)
+            }
         }
     }
     viewModel.onEvent<ThreadUiEvent.AddFavoriteSuccess> {

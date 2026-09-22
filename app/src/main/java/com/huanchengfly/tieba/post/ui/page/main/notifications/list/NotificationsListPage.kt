@@ -125,10 +125,9 @@ fun NotificationsListPage(
                                             navigator.navigate(
                                                 SubPostsPageDestination(
                                                     threadId = info.threadId!!.toLong(),
-                                                    //postId = if (info.quotePid != null) info.quotePid.toLong() else 0,
-                                                    //quotePid引用不确定，可能为postId，也可能未subPostId,导致子楼加载失败或者子回复异常
-                                                    //先传0，在子楼页面获取正确的postId
-                                                    postId = 0,
+                                                    // 带上父楼层 pid，子楼页才能渲染出「该楼层 + 全部楼中楼」，
+                                                    // 否则只显示单条楼中楼、看不到上下文。
+                                                    postId = if (info.quotePid != null) info.quotePid.toLong() else 0,
                                                     subPostId = info.postId!!.toLong(),
                                                     loadFromSubPost = true
                                                 )
@@ -137,7 +136,8 @@ fun NotificationsListPage(
                                             navigator.navigate(
                                                 ThreadPageDestination(
                                                     threadId = info.threadId!!.toLong(),
-                                                    postId = info.postId!!.toLong()
+                                                    postId = info.postId!!.toLong(),
+                                                    scrollToReply = true
                                                 )
                                             )
                                         }
@@ -206,7 +206,8 @@ fun NotificationsListPage(
                                                     navigator.navigate(
                                                         ThreadPageDestination(
                                                             threadId = info.threadId!!.toLong(),
-                                                            postId = info.postId!!.toLong()
+                                                            postId = info.postId!!.toLong(),
+                                                            scrollToReply = true
                                                         )
                                                     )
                                                 }
