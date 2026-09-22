@@ -18,6 +18,8 @@ import com.huanchengfly.tieba.post.arch.UiEvent
 import com.huanchengfly.tieba.post.arch.UiIntent
 import com.huanchengfly.tieba.post.arch.UiState
 import com.huanchengfly.tieba.post.arch.wrapImmutable
+import com.huanchengfly.tieba.post.capabilities.Capability
+import com.huanchengfly.tieba.post.capabilities.SafeModeBlockedException
 import com.huanchengfly.tieba.post.repository.GeneralTabListRepository
 import com.huanchengfly.tieba.post.ui.models.ThreadItemData
 import com.huanchengfly.tieba.post.ui.models.distinctById
@@ -30,6 +32,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.flatMapConcat
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onStart
@@ -153,8 +156,12 @@ private object GeneralTabListPartialChangeProducer :
             .onStart { emit(GeneralTabListPartialChange.LoadMore.Start) }
             .catch { emit(GeneralTabListPartialChange.LoadMore.Failure(it)) }
 
-    private fun GeneralTabListUiIntent.Agree.producePartialChange(): Flow<GeneralTabListPartialChange.Agree> =
-        TiebaApi.getInstance().opAgreeFlow(
+    private fun GeneralTabListUiIntent.Agree.producePartialChange(): Flow<GeneralTabListPartialChange.Agree> {
+        // 安全模式：点赞属写操作，直接拒绝（UI 层已禁用入口，此处为兜底）
+        if (Capability.AGREE.isBlockedBySafeMode) {
+            return flowOf(GeneralTabListPartialChange.Agree.Failure(threadId, postId, hasAgree, SafeModeBlockedException()))
+        }
+        return TiebaApi.getInstance().opAgreeFlow(
             threadId.toString(),
             postId.toString(),
             hasAgree,
@@ -176,6 +183,7 @@ private object GeneralTabListPartialChangeProducer :
                 )
             }
             .onStart { emit(GeneralTabListPartialChange.Agree.Start(threadId, hasAgree xor 1)) }
+    }
 }
 
 sealed interface GeneralTabListUiIntent : UiIntent {

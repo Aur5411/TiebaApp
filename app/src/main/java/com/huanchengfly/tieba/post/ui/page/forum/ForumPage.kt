@@ -193,7 +193,7 @@ private fun ForumHeaderPlaceholder(
                     overflow = TextOverflow.Ellipsis
                 )
             }
-            if (LocalAccount.current != null) {
+            if (LocalAccount.current != null && !LocalContext.current.appPreferences.safeMode) {
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(100))
@@ -288,7 +288,8 @@ private fun ForumHeader(
             }
             val btnEnabled =
                 (forum.is_like != 1) || (forum.sign_in_info?.user_info?.is_sign_in != 1)
-            if (LocalAccount.current != null) {
+            // 安全模式：关注吧 / 签到均为写操作，直接隐藏入口
+            if (LocalAccount.current != null && !LocalContext.current.appPreferences.safeMode) {
                 Button(
                     onClick = onBtnClick,
                     elevation = null,
@@ -663,7 +664,7 @@ fun ForumPage(
                 floatingActionButton = {
                     if (context.appPreferences.forumFabFunction != "hide"
                         && !(context.appPreferences.forumFabFunction == "post"
-                            && (context.appPreferences.hideReply || !context.appPreferences.showRiskyFeatures))
+                            && context.appPreferences.safeMode)
                     ) {
                         FloatingActionButton(
                             onClick = {
@@ -707,7 +708,7 @@ fun ForumPage(
                                     }
 
                                     else -> {
-                                        if (context.appPreferences.hideReply || !context.appPreferences.showRiskyFeatures) {
+                                        if (context.appPreferences.safeMode) {
                                             return@FloatingActionButton
                                         }
                                         coroutineScope.launch {

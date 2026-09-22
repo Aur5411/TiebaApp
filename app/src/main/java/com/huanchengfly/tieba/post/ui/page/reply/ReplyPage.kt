@@ -652,7 +652,7 @@ internal fun ReplyPageContent(
             } else {
                 IconButton(
                     onClick = {
-                        if (context.appPreferences.safeMode || !context.appPreferences.showRiskyFeatures) {
+                        if (context.appPreferences.safeMode) {
                             safeModeDialogOnOpen = false
                             warningDialogState.show()
                             return@IconButton
@@ -788,29 +788,21 @@ internal fun ReplyPageContent(
 
     Dialog(
         dialogState = warningDialogState,
-        title = {
-            Text(
-                text = if (context.appPreferences.safeMode) {
-                    stringResource(id = R.string.title_dialog_safe_mode)
-                } else {
-                    stringResource(id = R.string.title_dialog_risky_hidden)
-                }
-            )
-        },
+        title = { Text(text = stringResource(id = R.string.title_dialog_safe_mode)) },
         buttons = {
             DialogPositiveButton(
                 text = stringResource(id = R.string.btn_use_official_client),
                 onClick = { launchOfficialApp() }
             )
-            if (context.appPreferences.safeMode) {
-                DialogNegativeButton(
-                    text = stringResource(id = R.string.btn_turn_off_safe_mode),
-                    onClick = {
-                        context.appPreferences.safeMode = false
-                        context.toastShort(R.string.toast_safe_mode_disabled)
-                    }
-                )
-            }
+            DialogNegativeButton(
+                text = stringResource(id = R.string.btn_turn_off_safe_mode),
+                onClick = {
+                    context.appPreferences.safeMode = false
+                    // 关闭安全模式后重置「不再提示」，下次重新开启时仍会提醒一次
+                    context.appPreferences.safeModeDialogDontShow = false
+                    context.toastShort(R.string.toast_safe_mode_disabled)
+                }
+            )
             DialogNegativeButton(
                 text = stringResource(id = R.string.btn_cancel_safe_mode),
                 onClick = {
@@ -819,21 +811,30 @@ internal fun ReplyPageContent(
                     }
                 }
             )
+            DialogNegativeButton(
+                text = stringResource(id = R.string.btn_safe_mode_dont_show_again),
+                onClick = {
+                    context.appPreferences.safeModeDialogDontShow = true
+                    context.toastShort(R.string.toast_safe_mode_dont_show_again)
+                    if (safeModeDialogOnOpen) {
+                        onBack()
+                    }
+                }
+            )
         },
     ) {
         Text(
-            text = if (context.appPreferences.safeMode) {
-                stringResource(id = R.string.message_dialog_safe_mode)
-            } else {
-                stringResource(id = R.string.message_dialog_risky_hidden)
-            },
+            text = stringResource(id = R.string.message_dialog_safe_mode),
             modifier = Modifier.padding(horizontal = 24.dp)
         )
     }
 
-    // 只读保护：安全模式开启或「显示有风险的功能」未开启时，进入本页面即弹出提示；发送操作同样会被拦截
+    // 安全模式：进入发贴/回贴页时弹出提示；发送操作同样会被拦截
+    // 用户点过「不再提示」后不再弹出（safeModeDialogDontShow == true）
     LaunchedEffect(Unit) {
-        if (context.appPreferences.safeMode || !context.appPreferences.showRiskyFeatures) {
+        if (context.appPreferences.safeMode &&
+            !context.appPreferences.safeModeDialogDontShow
+        ) {
             safeModeDialogOnOpen = true
             warningDialogState.show()
         }

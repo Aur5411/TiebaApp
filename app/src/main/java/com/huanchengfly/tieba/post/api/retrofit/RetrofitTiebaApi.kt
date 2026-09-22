@@ -31,6 +31,7 @@ import com.huanchengfly.tieba.post.api.retrofit.interfaces.OfficialProtobufTieba
 import com.huanchengfly.tieba.post.api.retrofit.interfaces.OfficialTiebaApi
 import com.huanchengfly.tieba.post.api.retrofit.interfaces.SofireApi
 import com.huanchengfly.tieba.post.api.retrofit.interfaces.WebTiebaApi
+import com.huanchengfly.tieba.post.capabilities.Capability
 import com.huanchengfly.tieba.post.toJson
 import com.huanchengfly.tieba.post.utils.AccountUtil
 import com.huanchengfly.tieba.post.utils.CacheUtil.base64Encode
@@ -80,7 +81,12 @@ object RetrofitTiebaApi {
         )
     private val gsonConverterFactory = GsonConverterFactory.create()
     private val sortAndSignInterceptor = SortAndSignInterceptor("tiebaclient!!!")
-    private val safeModeInterceptor = SafeModeInterceptor()
+
+    /**
+     * 安全模式拦截器。安全模式开启时拦截所有写操作，关闭时为空实现、全部放行。
+     * 切换安全模式会导致 App 重启，故此处取一次即可。
+     */
+    private val safeModeInterceptor = Capability.currentInterceptor()
 
     val NEW_TIEBA_API: NewTiebaApi by lazy {
         createJsonApi<NewTiebaApi>(

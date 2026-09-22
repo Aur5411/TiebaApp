@@ -134,8 +134,6 @@ open class AppPreferencesUtils private constructor(ctx: Context) {
 
     var hideMedia by DataStoreDelegates.boolean(defaultValue = false)
 
-    var hideReply by DataStoreDelegates.boolean(defaultValue = false)
-
     var homePageScroll by DataStoreDelegates.boolean(defaultValue = false)
 
     var homePageShowHistoryForum by DataStoreDelegates.boolean(defaultValue = true)
@@ -186,21 +184,22 @@ open class AppPreferencesUtils private constructor(ctx: Context) {
     )
 
     /**
-     * 安全模式（只读开关）。
+     * 安全模式（只读开关），**默认开启**。
      *
      * 开启后，本 App 会拦截发贴、回贴、签到、点赞、关注等所有写操作，仅保留浏览功能，
-     * 用于最大程度规避第三方客户端写操作带来的封号风险。
+     * 并隐藏发贴 / 回贴 / 一键签到等写操作入口，用于最大程度规避封号风险。
      * 在「设置 - 习惯设置」中切换。
      */
-    var safeMode by DataStoreDelegates.boolean(defaultValue = false)
+    var safeMode by DataStoreDelegates.boolean(defaultValue = true)
 
     /**
-     * 是否显示有风险的功能入口（发贴 / 回贴 / 签到 / 点赞 / 关注 / 收藏 / 编辑资料等）。
+     * 安全模式提示弹窗的「不再提示」标记，**默认关闭**（即默认仍会弹窗）。
      *
-     * 默认 false：隐藏这些写操作入口，配合安全模式形成只读保护。
-     * 在「设置 - 习惯设置」中打开该开关后，会自动重启应用使隐藏的入口恢复显示。
+     * 用户在弹窗中点击「不再提示」后置为 true，之后进入贴子详情页 / 发贴回贴页
+     * 都不再弹出安全模式提示。关闭安全模式会自动重置为 false（见 SafeModePrefs 相关逻辑），
+     * 以便下次重新开启安全模式时仍能提示一次。
      */
-    var showRiskyFeatures by DataStoreDelegates.boolean(defaultValue = false)
+    var safeModeDialogDontShow by DataStoreDelegates.boolean(defaultValue = false)
 
     var radius by DataStoreDelegates.int(defaultValue = 8)
 

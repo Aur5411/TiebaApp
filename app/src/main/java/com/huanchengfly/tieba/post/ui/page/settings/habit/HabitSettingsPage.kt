@@ -17,14 +17,13 @@ import androidx.compose.material.icons.automirrored.rounded.Sort
 import androidx.compose.material.icons.filled.TabletAndroid
 import androidx.compose.material.icons.outlined.AddModerator
 import androidx.compose.material.icons.outlined.CalendarViewDay
+import androidx.compose.material.icons.outlined.Campaign
 import androidx.compose.material.icons.outlined.ImageSearch
 import androidx.compose.material.icons.outlined.NightsStay
 import androidx.compose.material.icons.outlined.PhotoSizeSelectActual
 import androidx.compose.material.icons.outlined.SecurityUpdateWarning
-import androidx.compose.material.icons.outlined.SpeakerNotesOff
 import androidx.compose.material.icons.outlined.StarOutline
 import androidx.compose.material.icons.outlined.Verified
-import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.WatchLater
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -48,6 +47,7 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.BackNavigationIcon
 import com.huanchengfly.tieba.post.ui.widgets.compose.MyScaffold
 import com.huanchengfly.tieba.post.ui.widgets.compose.Sizes
 import com.huanchengfly.tieba.post.ui.widgets.compose.TitleCentredToolbar
+import com.huanchengfly.tieba.post.utils.appPreferences
 import com.huanchengfly.tieba.post.utils.isPhotoPickerAvailable
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
@@ -325,32 +325,20 @@ fun HabitSettingsPage(
             }
             prefsItem {
                 SwitchPref(
-                    key = "showRiskyFeatures",
-                    title = stringResource(id = R.string.title_show_risky_features),
-                    summary = stringResource(id = R.string.summary_show_risky_features),
-                    defaultChecked = false,
-                    onCheckedChange = {
+                    key = "safeMode",
+                    title = stringResource(id = R.string.title_safe_mode),
+                    summary = stringResource(id = R.string.summary_safe_mode),
+                    defaultChecked = true,
+                    onCheckedChange = { checked ->
+                        // 关闭安全模式时重置「不再提示」，下次重新开启时仍会提醒一次
+                        if (!checked) {
+                            context.appPreferences.safeModeDialogDontShow = false
+                        }
                         Toast.makeText(context, R.string.toast_restart_app, Toast.LENGTH_SHORT).show()
                         Handler(Looper.getMainLooper()).postDelayed({
                             restartApp(context)
                         }, 800)
                     },
-                ) {
-                    LeadingIcon {
-                        AvatarIcon(
-                            icon = Icons.Outlined.Visibility,
-                            size = Sizes.Small,
-                            contentDescription = null,
-                        )
-                    }
-                }
-            }
-            prefsItem {
-                SwitchPref(
-                    key = "safeMode",
-                    title = stringResource(id = R.string.title_safe_mode),
-                    summary = stringResource(id = R.string.summary_safe_mode),
-                    defaultChecked = false,
                 ) {
                     LeadingIcon {
                         AvatarIcon(
@@ -361,18 +349,31 @@ fun HabitSettingsPage(
                     }
                 }
             }
-            prefsItem {
-                SwitchPref(
-                    key = "hideReply",
-                    title = stringResource(id = R.string.title_hide_reply),
-                    defaultChecked = false,
-                ) {
-                    LeadingIcon {
-                        AvatarIcon(
-                            icon = Icons.Outlined.SpeakerNotesOff,
-                            size = Sizes.Small,
-                            contentDescription = null,
-                        )
+            // 「不再提示」的恢复入口：仅当用户此前点过「不再提示」时才显示，
+            // 打开该开关即清掉标记，重新开启进入贴子/发贴页的安全模式提醒。
+            if (context.appPreferences.safeModeDialogDontShow) {
+                prefsItem {
+                    SwitchPref(
+                        key = "safeModeDialogDontShow",
+                        title = stringResource(id = R.string.title_dialog_safe_mode_hint_again),
+                        summary = stringResource(id = R.string.summary_dialog_safe_mode_hint_again),
+                        defaultChecked = false,
+                        onCheckedChange = {
+                            context.appPreferences.safeModeDialogDontShow = false
+                            Toast.makeText(
+                                context,
+                                R.string.toast_safe_mode_hint_restored,
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        },
+                    ) {
+                        LeadingIcon {
+                            AvatarIcon(
+                                icon = Icons.Outlined.Campaign,
+                                size = Sizes.Small,
+                                contentDescription = null,
+                            )
+                        }
                     }
                 }
             }

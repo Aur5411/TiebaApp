@@ -1,5 +1,10 @@
 package com.huanchengfly.tieba.post.ui.page.thread
 
+import android.content.ActivityNotFoundException
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
 import android.util.Log
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
@@ -148,6 +153,9 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.Card
 import com.huanchengfly.tieba.post.ui.widgets.compose.Chip
 import com.huanchengfly.tieba.post.ui.widgets.compose.ConfirmDialog
 import com.huanchengfly.tieba.post.ui.widgets.compose.Container
+import com.huanchengfly.tieba.post.ui.widgets.compose.Dialog
+import com.huanchengfly.tieba.post.ui.widgets.compose.DialogNegativeButton
+import com.huanchengfly.tieba.post.ui.widgets.compose.DialogPositiveButton
 import com.huanchengfly.tieba.post.ui.widgets.compose.ErrorScreen
 import com.huanchengfly.tieba.post.ui.widgets.compose.HorizontalDivider
 import com.huanchengfly.tieba.post.ui.widgets.compose.LazyLoad
@@ -908,6 +916,54 @@ fun ThreadPage(
                 }
             }
         }
+    }
+
+    // 安全模式提示：进入帖子详情页时弹出（已登录才提示），提供「使用官方客户端」与「关闭安全模式」
+    // 用户点过「不再提示」后不再弹出（safeModeDialogDontShow == true）
+    val safeModeWarningDialogState = rememberDialogState()
+    val isLoggedIn = LocalAccount.current != null
+    LaunchedEffect(threadId, isLoggedIn) {
+        if (context.appPreferences.safeMode &&
+            isLoggedIn &&
+            !context.appPreferences.safeModeDialogDontShow
+        ) {
+            safeModeWarningDialogState.show()
+        }
+    }
+    Dialog(
+        dialogState = safeModeWarningDialogState,
+        title = { Text(text = stringResource(id = R.string.title_dialog_safe_mode)) },
+        buttons = {
+            DialogPositiveButton(
+                text = stringResource(id = R.string.btn_use_official_client),
+                onClick = { launchOfficialAppForThread(context, threadId, postId) }
+            )
+            DialogNegativeButton(
+                text = stringResource(id = R.string.btn_turn_off_safe_mode),
+                onClick = {
+                    context.appPreferences.safeMode = false
+                    // 关闭安全模式后重置「不再提示」，下次重新开启时仍会提醒一次
+                    context.appPreferences.safeModeDialogDontShow = false
+                    context.toastShort(R.string.toast_safe_mode_disabled)
+                }
+            )
+            DialogNegativeButton(
+                text = stringResource(id = R.string.btn_cancel_safe_mode),
+                onClick = { }
+            )
+            DialogNegativeButton(
+                text = stringResource(id = R.string.btn_safe_mode_dont_show_again),
+                onClick = {
+                    context.appPreferences.safeModeDialogDontShow = true
+                    context.toastShort(R.string.toast_safe_mode_dont_show_again)
+                }
+            )
+        },
+    ) {
+        Text(
+            text = stringResource(id = R.string.message_dialog_safe_mode),
+            modifier = Modifier.padding(horizontal = 24.dp)
+        )
     }
 
     val pullRefreshState = rememberPullRefreshState(
@@ -1948,9 +2004,7 @@ private fun BottomBar(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            if (user.get { is_login } == 1 && !LocalContext.current.appPreferences.hideReply
-                && LocalContext.current.appPreferences.showRiskyFeatures
-            ) {
+            if (user.get { is_login } == 1 && !LocalContext.current.appPreferences.safeMode) {
                 Avatar(
                     data = StringUtil.getAvatarUrl(user.get { portrait }),
                     size = Sizes.Tiny,
@@ -2076,7 +2130,7 @@ fun PostCard(
             onClick = {
                 onReplyClick(post)
             }.takeIf {
-                !context.appPreferences.hideReply && context.appPreferences.showRiskyFeatures && account != null
+                !context.appPreferences.safeMode && account != null
             },
             menuContent = {
                 if (onMenuCopyClick != null) {
@@ -2092,7 +2146,7 @@ fun PostCard(
                     }
                 }
                 if (account != null) {
-                    if (!context.appPreferences.hideReply && context.appPreferences.showRiskyFeatures) {
+                    if (!context.appPreferences.safeMode) {
                         DropdownMenuItem(
                             onClick = {
                                 onReplyClick(post)
@@ -2320,7 +2374,7 @@ private fun SubPostItem(
                 }
             }
             if (LocalAccount.current != null) {
-                if (!context.appPreferences.hideReply && context.appPreferences.showRiskyFeatures) {
+                if (!context.appPreferences.safeMode) {
                     DropdownMenuItem(
                         onClick = {
                             onReplyClick?.invoke(subPostList.get())
@@ -2577,5 +2631,31 @@ private fun ThreadMenu(
                 )
             }
         }
+    }
+}
+
+/**
+ * 拉起官方贴吧客户端，定位到当前帖子（楼层 / 主题帖）。
+ * 供安全模式提示弹窗「使用官方客户端」使用。
+ */
+private fun launchOfficialAppForThread(context: Context, threadId: Long, postId: Long?) {
+    val uri = if (postId != null && postId != 0L) {
+        Uri.parse("com.baidu.tieba://unidispatch/pb?obj_locate=comment_lzl_cut_guide&obj_source=wise&obj_name=index&obj_param2=chrome&has_token=0&qd=scheme&refer=tieba.baidu.com&wise_sample_id=3000232_2&hightlight_anchor_pid=${postId}&is_anchor_to_comment=1&comment_sort_type=0&fr=bpush&tid=${threadId}")
+    } else {
+        Uri.parse("com.baidu.tieba://unidispatch/pb?obj_locate=pb_reply&obj_source=wise&obj_name=index&obj_param2=chrome&has_token=0&qd=scheme&refer=tieba.baidu.com&wise_sample_id=3000232_2-99999_9&fr=bpush&tid=${threadId}")
+    }
+    val intent = Intent(Intent.ACTION_VIEW).setData(uri)
+    val resolveInfos = context.packageManager.queryIntentActivities(
+        intent,
+        PackageManager.MATCH_DEFAULT_ONLY
+    ).filter { it.activityInfo.packageName != context.packageName }
+    try {
+        if (resolveInfos.isNotEmpty()) {
+            context.startActivity(intent)
+        } else {
+            context.toastShort(R.string.toast_official_client_not_install)
+        }
+    } catch (e: ActivityNotFoundException) {
+        context.toastShort(R.string.toast_official_client_not_install)
     }
 }

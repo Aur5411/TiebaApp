@@ -14,6 +14,8 @@ import java.util.Calendar
 class BootCompleteSignReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (Intent.ACTION_BOOT_COMPLETED == intent.action) {
+            // 安全模式下不执行任何签到（签到为写操作，会被网络层拦截）
+            if (context.appPreferences.safeMode) return
             val autoSign = context.appPreferences.autoSign
             if (autoSign) {
                 val autoSignTimeStr = context.appPreferences.autoSignTime

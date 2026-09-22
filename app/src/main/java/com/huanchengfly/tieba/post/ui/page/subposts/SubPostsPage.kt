@@ -340,9 +340,7 @@ internal fun SubPostsContent(
                 )
             },
             bottomBar = {
-                if (account != null && !LocalContext.current.appPreferences.hideReply
-                    && LocalContext.current.appPreferences.showRiskyFeatures
-                ) {
+                if (account != null && !LocalContext.current.appPreferences.safeMode) {
                     Column(
                         modifier = Modifier.background(ExtendedTheme.colors.threadBottomBar)
                     ) {
@@ -619,7 +617,7 @@ private fun SubPostItem(
                     }
                 }
                 if (account != null) {
-                    if (!context.appPreferences.hideReply && context.appPreferences.showRiskyFeatures) {
+                    if (!context.appPreferences.safeMode) {
                         DropdownMenuItem(
                             onClick = {
                                 onReplyClick(subPost.get())
@@ -656,7 +654,7 @@ private fun SubPostItem(
                 }
             },
             onClick = { onReplyClick(subPost.get()) }.takeUnless {
-                context.appPreferences.hideReply || !context.appPreferences.showRiskyFeatures || account == null
+                context.appPreferences.safeMode || account == null
             }
         ) {
             Card(

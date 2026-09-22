@@ -728,11 +728,14 @@ fun HomePage(
                 title = stringResource(id = R.string.title_explore),
                 navigationIcon = toolboxAccountNavIconIfCompact(navigator),
                 actions = {
-                    ActionItem(
-                        icon = ImageVector.vectorResource(id = R.drawable.ic_oksign),
-                        contentDescription = stringResource(id = R.string.title_oksign)
-                    ) {
-                        TiebaUtil.startSign(context)
+                    // 安全模式下隐藏「一键签到」入口（签到属写操作，会被网络层拦截）
+                    if (!context.appPreferences.safeMode) {
+                        ActionItem(
+                            icon = ImageVector.vectorResource(id = R.drawable.ic_oksign),
+                            contentDescription = stringResource(id = R.string.title_oksign)
+                        ) {
+                            TiebaUtil.startSign(context)
+                        }
                     }
                     // 一个按钮收纳：单列/双列、排序方式、最近访问吧开关
                     Box {

@@ -38,6 +38,7 @@ import com.huanchengfly.tieba.post.ui.page.destinations.MoreSettingsPageDestinat
 import com.huanchengfly.tieba.post.ui.page.destinations.OKSignSettingsPageDestination
 import com.huanchengfly.tieba.post.ui.widgets.compose.Avatar
 import com.huanchengfly.tieba.post.ui.widgets.compose.AvatarIcon
+import com.huanchengfly.tieba.post.utils.appPreferences
 import com.huanchengfly.tieba.post.ui.widgets.compose.BackNavigationIcon
 import com.huanchengfly.tieba.post.ui.widgets.compose.Sizes
 import com.huanchengfly.tieba.post.ui.widgets.compose.TitleCentredToolbar
@@ -108,6 +109,7 @@ fun NowAccountItem(
 fun SettingsPage(
     navigator: DestinationsNavigator,
 ) {
+    val context = LocalContext.current
     ProvideNavigator(navigator = navigator) {
         Scaffold(
             backgroundColor = Color.Transparent,
@@ -186,24 +188,27 @@ fun SettingsPage(
                         onClick = { navigator.navigate(HabitSettingsPageDestination) }
                     )
                 }
-                prefsItem {
-                    TextPref(
-                        title = stringResource(id = R.string.title_oksign),
-                        summary = stringResource(id = R.string.summary_settings_oksign),
-                        leadingIcon = {
-                            LeadingIcon {
-                                AvatarIcon(
-                                    icon = ImageVector.vectorResource(id = R.drawable.ic_rocket_launch_black_24),
-                                    size = Sizes.Small,
-                                    contentDescription = null,
-                                )
+                // 安全模式下该页所有签到设置均无意义（签到已被拦截），整项隐藏
+                if (!context.appPreferences.safeMode) {
+                    prefsItem {
+                        TextPref(
+                            title = stringResource(id = R.string.title_oksign),
+                            summary = stringResource(id = R.string.summary_settings_oksign),
+                            leadingIcon = {
+                                LeadingIcon {
+                                    AvatarIcon(
+                                        icon = ImageVector.vectorResource(id = R.drawable.ic_rocket_launch_black_24),
+                                        size = Sizes.Small,
+                                        contentDescription = null,
+                                    )
+                                }
+                            },
+                            darkenOnDisable = false,
+                            onClick = {
+                                navigator.navigate(OKSignSettingsPageDestination)
                             }
-                        },
-                        darkenOnDisable = false,
-                        onClick = {
-                            navigator.navigate(OKSignSettingsPageDestination)
-                        }
-                    )
+                        )
+                    }
                 }
                 prefsItem {
                     TextPref(

@@ -70,6 +70,7 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.TitleCentredToolbar
 import com.huanchengfly.tieba.post.utils.AccountUtil
 import com.huanchengfly.tieba.post.utils.StringUtil
 import com.huanchengfly.tieba.post.utils.TiebaUtil
+import com.huanchengfly.tieba.post.utils.appPreferences
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 
@@ -165,22 +166,29 @@ fun ToolboxPage(
         },
     )
 
-    val forumEntries = listOf(
-        ToolboxEntry(
-            icon = Icons.Outlined.Forum,
-            title = stringResource(id = R.string.title_toolbox_like_forum),
-            summary = stringResource(id = R.string.summary_toolbox_like_forum),
-        ) {
-            requireLogin { navigator.navigate(UserLikeForumListPageDestination(selfUid)) }
-        },
-        ToolboxEntry(
-            icon = Icons.Rounded.CheckCircle,
-            title = stringResource(id = R.string.title_toolbox_oksign),
-            summary = stringResource(id = R.string.summary_toolbox_oksign),
-        ) {
-            requireLogin { TiebaUtil.startSign(context) }
-        },
-    )
+    val forumEntries = buildList {
+        add(
+            ToolboxEntry(
+                icon = Icons.Outlined.Forum,
+                title = stringResource(id = R.string.title_toolbox_like_forum),
+                summary = stringResource(id = R.string.summary_toolbox_like_forum),
+            ) {
+                requireLogin { navigator.navigate(UserLikeForumListPageDestination(selfUid)) }
+            }
+        )
+        // 一键签到属于写操作，安全模式下隐藏入口
+        if (!context.appPreferences.safeMode) {
+            add(
+                ToolboxEntry(
+                    icon = Icons.Rounded.CheckCircle,
+                    title = stringResource(id = R.string.title_toolbox_oksign),
+                    summary = stringResource(id = R.string.summary_toolbox_oksign),
+                ) {
+                    requireLogin { TiebaUtil.startSign(context) }
+                }
+            )
+        }
+    }
 
     val appEntries = listOf(
         ToolboxEntry(
