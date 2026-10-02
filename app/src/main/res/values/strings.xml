@@ -214,6 +214,23 @@
     <string name="summary_search_user_fans">查看该吧友的粉丝（需登录）</string>
     <string name="title_search_user_like_forum">TA 关注的吧</string>
     <string name="summary_search_user_like_forum">查看该吧友关注过的贴吧</string>
+    <string name="title_search_user_analysis">TA 的发言分析</string>
+    <string name="summary_search_user_analysis">对 TA 的历史发言做统计、词云与关键词搜索</string>
+
+    <!-- 分析模块（按用户 ID 在线查询，不做导出） -->
+    <string name="title_post_analysis">发言分析</string>
+    <string name="hint_analysis_keyword">搜索 TA 的发言（输入关键词，留空看统计）</string>
+    <string name="label_analysis_hit">命中 %1$d 条</string>
+    <string name="title_analysis_overview">概览</string>
+    <string name="label_analysis_total">发言总数</string>
+    <string name="label_analysis_threads">主题帖</string>
+    <string name="label_analysis_replies">回帖</string>
+    <string name="label_analysis_forum_count">涉及贴吧</string>
+    <string name="label_analysis_range">时间跨度</string>
+    <string name="title_analysis_month">按月分布</string>
+    <string name="title_analysis_hour">活跃时段</string>
+    <string name="title_analysis_forum_top">常逛的吧 Top 10</string>
+    <string name="title_analysis_words">高频词云</string>
     <string name="filter_follow_all">我的关注</string>
     <string name="filter_follow_mutual">互相关注</string>
     <string name="toast_follow_list_unfollow_success">已取消关注</string>

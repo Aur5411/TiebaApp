@@ -39,6 +39,7 @@ import androidx.compose.material.icons.outlined.PersonSearch
 import androidx.compose.material.icons.outlined.Reply
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -69,6 +70,7 @@ import com.huanchengfly.tieba.post.ui.page.ProvideNavigator
 import com.huanchengfly.tieba.post.ui.page.destinations.FansListPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.FollowListPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.LoginPageDestination
+import com.huanchengfly.tieba.post.ui.page.destinations.PostAnalysisPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.UserLikeForumListPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.UserPostListPageDestination
 import com.huanchengfly.tieba.post.ui.widgets.compose.Avatar
@@ -130,6 +132,7 @@ private fun Context.readClipboardText(): String? {
 @Composable
 fun SearchUserPage(
     navigator: DestinationsNavigator,
+    initialUid: String? = null,
     viewModel: SearchUserViewModel = pageViewModel(),
 ) {
     ProvideNavigator(navigator = navigator) {
@@ -150,6 +153,7 @@ fun SearchUserPage(
             SearchUserContent(
                 viewModel = viewModel,
                 contentPadding = contentPaddings,
+                initialUid = initialUid,
             )
         }
     }
@@ -177,6 +181,7 @@ fun SearchUserTabPage() {
 private fun SearchUserContent(
     viewModel: SearchUserViewModel,
     contentPadding: PaddingValues,
+    initialUid: String? = null,
 ) {
     val context = LocalContext.current
     val navigator = LocalNavigator.current
@@ -199,7 +204,7 @@ private fun SearchUserContent(
         initial = null,
     )
 
-    var uidInput by rememberSaveable { mutableStateOf("") }
+    var uidInput by rememberSaveable { mutableStateOf(initialUid ?: "") }
     var localError by remember { mutableStateOf<String?>(null) }
 
     val emptyHint = stringResource(id = R.string.error_search_user_uid_empty)
@@ -221,6 +226,15 @@ private fun SearchUserContent(
         }
         localError = null
         viewModel.send(SearchUserUiIntent.Search(text))
+    }
+
+    // 由「复制贴吧 ID」跳转进入时，把当前 ID 直接粘贴到输入框并自动查询。
+    LaunchedEffect(Unit) {
+        val init = initialUid?.trim().orEmpty()
+        if (init.isNotEmpty() && UID_REGEX.matches(init)) {
+            uidInput = init
+            submit(init)
+        }
     }
 
     fun pasteFromClipboard() {
@@ -797,6 +811,21 @@ private fun quickEntries(
                 title = context.getString(R.string.title_search_user_like_forum),
                 summary = context.getString(R.string.summary_search_user_like_forum),
                 onClick = { navigator.navigate(UserLikeForumListPageDestination(uid)) },
+            ),
+            SearchUserEntry(
+                icon = Icons.Outlined.PersonSearch,
+                title = context.getString(R.string.title_search_user_analysis),
+                summary = context.getString(R.string.summary_search_user_analysis),
+                onClick = {
+                    navigator.navigate(
+                        PostAnalysisPageDestination(
+                            uid = uid,
+                            authorName = authorName,
+                            authorNameShow = authorNameShow,
+                            authorPortrait = authorPortrait,
+                        )
+                    )
+                },
             ),
         )
     }

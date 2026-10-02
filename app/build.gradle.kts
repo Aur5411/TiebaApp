@@ -82,10 +82,11 @@ android {
                 storePassword = keystoreProperties.getProperty("keystore.password")
                 keyAlias = keystoreProperties.getProperty("keystore.key.alias")
                 keyPassword = keystoreProperties.getProperty("keystore.key.password")
+                // 统一使用 v1 + v2 + v3 签名（v4 仅用于增量安装，不需要）
                 enableV1Signing = true
                 enableV2Signing = true
                 enableV3Signing = true
-                enableV4Signing = true
+                enableV4Signing = false
             }
         }
     }
@@ -141,6 +142,13 @@ android {
             (this as BaseVariantOutputImpl).outputFileName = fileName
         }
     }
+}
+
+// 钉死 Kotlin 的 jvmTarget=17，与上面 compileOptions 的 Java 17 保持一致。
+// 否则在本机用 JDK 21 跑 Gradle 时，Kotlin 2.3 会把 jvmTarget 推到 21，
+// 与 Java 的 17 冲突报 "Inconsistent JVM Target Compatibility"。
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile>().configureEach {
+    compilerOptions.jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
 }
 
 dependencies {

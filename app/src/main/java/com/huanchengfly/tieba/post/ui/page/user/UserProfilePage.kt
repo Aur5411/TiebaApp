@@ -128,6 +128,7 @@ import com.huanchengfly.tieba.post.utils.StringUtil.getShortNumString
 import com.huanchengfly.tieba.post.utils.TiebaUtil
 import com.huanchengfly.tieba.post.ui.page.LocalNavigator
 import com.huanchengfly.tieba.post.ui.page.destinations.FollowListPageDestination
+import com.huanchengfly.tieba.post.ui.page.destinations.SearchUserPageDestination
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import kotlinx.collections.immutable.ImmutableList
@@ -497,6 +498,7 @@ private fun UserProfileContentNormal(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
+    val navigator = LocalNavigator.current
     val coroutineScope = rememberCoroutineScope()
     val density = LocalDensity.current
 
@@ -684,13 +686,14 @@ private fun UserProfileContentNormal(
                                     }
                                 },
                                 onCopyIdClick = {
-                                    // 复制的是「用户 ID」（user_id），也就是查人接口真正认的那个 ID。
-                                    // 此处刻意与下方 Chip 的取值保持一致，做到「显示什么就复制什么」。
+                                    val id = user.get { id }.toString()
+                                    // 复制贴吧 ID 到剪贴板，同时跳转到「查人」页并粘贴该 ID 自动查询。
                                     TiebaUtil.copyText(
                                         context,
-                                        user.get { id }.toString(),
+                                        id,
                                         context.getString(R.string.toast_copy_user_id)
                                     )
+                                    navigator.navigate(SearchUserPageDestination(initialUid = id))
                                 }
                             )
                         }
@@ -730,6 +733,7 @@ private fun UserProfileContentExpanded(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
+    val navigator = LocalNavigator.current
 
     MyScaffold(
         topBar = {
@@ -833,12 +837,15 @@ private fun UserProfileContentExpanded(
                             }
                         },
                         onCopyIdClick = {
+                            val id = user.get { id }.toString()
                             // 与 Chip 显示保持一致：显示的就是 user_id，复制的也是 user_id。
+                            // 复制贴吧 ID 到剪贴板，同时跳转到「查人」页并粘贴该 ID 自动查询。
                             TiebaUtil.copyText(
                                 context,
-                                user.get { id }.toString(),
+                                id,
                                 context.getString(R.string.toast_copy_user_id)
                             )
+                            navigator.navigate(SearchUserPageDestination(initialUid = id))
                         }
                     )
 
