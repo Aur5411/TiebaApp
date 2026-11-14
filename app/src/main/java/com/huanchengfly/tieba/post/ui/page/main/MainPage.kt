@@ -19,6 +19,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -139,12 +140,20 @@ fun MainPage(
     }
     val pagerState = rememberPagerState(
         pageCount = { pageCount },
-        initialPage = if (hideExplore && defaultStart > 0) defaultStart - 1 else defaultStart
+        // 设置项 defaultStart：0=首页(动态)、1=进吧、2=消息。
+        // 隐藏「动态」后页签前移一位，默认起始页需要跟着映射，否则会越界或被跳过。
+        initialPage = if (hideExplore) (defaultStart - 1).coerceIn(0, pageCount - 1) else defaultStart
     )
 
+    // issue #6：hideExplore 隐藏的是底部第一个页面（「动态」），它之后的页签索引整体前移一位。
+    // 开关切换时按位移修正当前页，避免用户停留的内容被悄悄换掉或越界。
+    var lastHideExplore by remember { mutableStateOf(hideExplore) }
     LaunchedEffect(hideExplore) {
-        if (pagerState.currentPage == 3 && hideExplore) {
-            pagerState.scrollToPage(2)
+        if (hideExplore != lastHideExplore) {
+            val current = pagerState.currentPage
+            lastHideExplore = hideExplore
+            val target = if (hideExplore) current - 1 else current + 1
+            pagerState.scrollToPage(target.coerceIn(0, if (hideExplore) 2 else 3))
         }
     }
 
@@ -157,7 +166,8 @@ fun MainPage(
     val navigationItems by remember {
         derivedStateOf {
             listOfNotNull(
-                NavigationItem(
+                if (hideExplore) null
+                else NavigationItem(
                     id = "home",
                     icon = { AnimatedImageVector.animatedVectorResource(id = R.drawable.ic_animated_rounded_home) },
                     title = { stringResource(id = R.string.title_main) },
@@ -165,8 +175,7 @@ fun MainPage(
                         ExplorePage()
                     }
                 ),
-                if (hideExplore) null
-                else NavigationItem(
+                NavigationItem(
                     id = "explore",
                     icon = {
                         AnimatedImageVector.animatedVectorResource(id = R.drawable.ic_animated_rounded_inventory_2)
