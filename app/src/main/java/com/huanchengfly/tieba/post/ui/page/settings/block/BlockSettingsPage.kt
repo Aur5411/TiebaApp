@@ -8,6 +8,7 @@ import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Block
 import androidx.compose.material.icons.outlined.HideSource
+import androidx.compose.material.icons.outlined.TextFields
 import androidx.compose.material.icons.outlined.VideocamOff
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -21,6 +22,7 @@ import com.huanchengfly.tieba.post.dataStore
 import com.huanchengfly.tieba.post.ui.common.prefs.PrefsScreen
 import com.huanchengfly.tieba.post.ui.common.prefs.widgets.SwitchPref
 import com.huanchengfly.tieba.post.ui.common.prefs.widgets.TextPref
+import com.huanchengfly.tieba.post.ui.page.destinations.BlockKeywordPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.BlockListPageDestination
 import com.huanchengfly.tieba.post.ui.page.settings.LeadingIcon
 import com.huanchengfly.tieba.post.ui.widgets.compose.AvatarIcon
@@ -74,6 +76,22 @@ fun BlockSettingsPage(
                         }
                     },
                     onClick = { navigator.navigate(BlockListPageDestination) }
+                )
+            }
+            prefsItem {
+                TextPref(
+                    title = stringResource(id = R.string.title_keyword_list_manage),
+                    summary = stringResource(id = R.string.summary_keyword_list_manage),
+                    leadingIcon = {
+                        LeadingIcon {
+                            AvatarIcon(
+                                icon = Icons.Outlined.TextFields,
+                                size = Sizes.Small,
+                                contentDescription = null,
+                            )
+                        }
+                    },
+                    onClick = { navigator.navigate(BlockKeywordPageDestination) }
                 )
             }
             prefsItem {

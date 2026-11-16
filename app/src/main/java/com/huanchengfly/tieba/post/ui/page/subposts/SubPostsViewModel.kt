@@ -26,6 +26,7 @@ import com.huanchengfly.tieba.post.arch.UiIntent
 import com.huanchengfly.tieba.post.arch.UiState
 import com.huanchengfly.tieba.post.arch.wrapImmutable
 import com.huanchengfly.tieba.post.ui.common.PbContentRender
+import com.huanchengfly.tieba.post.utils.BlockManager.autoHidden
 import com.huanchengfly.tieba.post.utils.BlockManager.shouldBlock
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.collections.immutable.ImmutableList
@@ -376,13 +377,15 @@ data class SubPostItemData(
     val subPost: ImmutableHolder<SubPostList>,
     val subPostContentRenders: ImmutableList<PbContentRender>,
     val blocked: Boolean = subPost.get { shouldBlock() },
+    val hidden: Boolean = subPost.get { autoHidden() },
 ) {
     constructor(
         subPost: SubPostList,
     ) : this(
         subPost.wrapImmutable(),
         subPost.content.renders.toImmutableList(),
-        subPost.shouldBlock()
+        subPost.shouldBlock(),
+        subPost.autoHidden()
     )
 
     val id: Long

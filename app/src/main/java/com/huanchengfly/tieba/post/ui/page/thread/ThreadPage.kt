@@ -1326,13 +1326,15 @@ fun ThreadPage(
                 items = latestPosts,
                 key = { (item) -> "LatestPost_${item.get { id }}" },
                 contentType = { "latestPost" }
-            ) { (item, blocked, renders, subPosts) ->
+            ) { postItem ->
+                // 命中屏蔽词的楼层直接不渲染
+                if (postItem.hidden) return@items
                 Container {
                     PostCard(
-                        item,
-                        renders,
-                        subPosts,
-                        blocked
+                        postItem.post,
+                        postItem.contentRenders,
+                        postItem.subPosts,
+                        postItem.blocked
                     )
                 }
             }
@@ -1924,13 +1926,15 @@ fun ThreadPage(
                                         items = data,
                                         key = { (item) -> "Post_${item.get { id }}" },
                                         contentType = { "post" }
-                                    ) { (item, blocked, renders, subPosts) ->
+                                    ) { postItem ->
+                                        // 命中屏蔽词的楼层直接不渲染
+                                        if (postItem.hidden) return@items
                                         Container {
                                             PostCard(
-                                                item,
-                                                renders,
-                                                subPosts,
-                                                blocked
+                                                postItem.post,
+                                                postItem.contentRenders,
+                                                postItem.subPosts,
+                                                postItem.blocked
                                             )
                                         }
                                     }
@@ -2313,6 +2317,8 @@ fun PostCard(
                             verticalArrangement = Arrangement.spacedBy(2.dp)
                         ) {
                             subPosts.fastForEach { item ->
+                                // 命中屏蔽词的楼中楼直接不渲染
+                                if (item.hidden) return@fastForEach
                                 BlockableContent(
                                     blocked = item.blocked,
                                     blockedTip = {

@@ -40,10 +40,7 @@ class BlockListViewModel :
 
         private fun produceLoadPartialChange(): Flow<BlockListPartialChange.Load> =
             flowOf<BlockListPartialChange.Load>(
-                BlockListPartialChange.Load.Success(
-                    BlockManager.blackList,
-                    BlockManager.whiteList
-                )
+                BlockListPartialChange.Load.Success(BlockManager.blackList)
             )
                 .onStart { BlockListPartialChange.Load.Start }
                 .catch { emit(BlockListPartialChange.Load.Failure(it)) }
@@ -52,8 +49,10 @@ class BlockListViewModel :
             flow<BlockListPartialChange.Add> {
                 val block = Block(
                     category = category,
-                    type = Block.TYPE_KEYWORD,
-                    keywords = keywords.toJson(),
+                    type = type,
+                    keywords = if (type == Block.TYPE_KEYWORD) keywords.toJson() else null,
+                    username = userName,
+                    uid = userId?.toString(),
                     isRegex = isRegex
                 )
                 val savedBlock = BlockManager.addBlock(block)
@@ -73,8 +72,11 @@ sealed interface BlockListUiIntent : UiIntent {
 
     data class Add(
         val category: Int,
-        val keywords: List<String>,
-        val isRegex: Boolean = false
+        val type: Int = Block.TYPE_KEYWORD,
+        val keywords: List<String> = emptyList(),
+        val isRegex: Boolean = false,
+        val userName: String? = null,
+        val userId: Long? = null,
     ) : BlockListUiIntent
 
     data class Delete(
@@ -90,7 +92,6 @@ sealed interface BlockListPartialChange : PartialChange<BlockListUiState> {
                 is Success -> oldState.copy(
                     isLoading = false,
                     blackList = blackList,
-                    whiteList = whiteList
                 )
 
                 is Failure -> oldState.copy(isLoading = false)
@@ -98,7 +99,7 @@ sealed interface BlockListPartialChange : PartialChange<BlockListUiState> {
 
         object Start : Load()
 
-        data class Success(val blackList: List<Block>, val whiteList: List<Block>) : Load()
+        data class Success(val blackList: List<Block>) : Load()
 
         data class Failure(val error: Throwable) : Load()
     }
@@ -106,21 +107,7 @@ sealed interface BlockListPartialChange : PartialChange<BlockListUiState> {
     sealed class Add : BlockListPartialChange {
         override fun reduce(oldState: BlockListUiState): BlockListUiState =
             when (this) {
-                is Success -> {
-                    val newBlackList =
-                        if (item.category == Block.CATEGORY_BLACK_LIST) {
-                            oldState.blackList + item
-                        } else {
-                            oldState.blackList
-                        }
-                    val newWhiteList =
-                        if (item.category == Block.CATEGORY_WHITE_LIST) {
-                            oldState.whiteList + item
-                        } else {
-                            oldState.whiteList
-                        }
-                    oldState.copy(blackList = newBlackList, whiteList = newWhiteList)
-                }
+                is Success -> oldState.copy(blackList = oldState.blackList + item)
 
                 is Failure -> oldState
             }
@@ -133,11 +120,9 @@ sealed interface BlockListPartialChange : PartialChange<BlockListUiState> {
     sealed class Delete : BlockListPartialChange {
         override fun reduce(oldState: BlockListUiState): BlockListUiState =
             when (this) {
-                is Success -> {
-                    val newBlackList = oldState.blackList.filterNot { it.id == deletedId }
-                    val newWhiteList = oldState.whiteList.filterNot { it.id == deletedId }
-                    oldState.copy(blackList = newBlackList, whiteList = newWhiteList)
-                }
+                is Success -> oldState.copy(
+                    blackList = oldState.blackList.filterNot { it.id == deletedId }
+                )
 
                 is Failure -> oldState
             }
@@ -151,7 +136,6 @@ sealed interface BlockListPartialChange : PartialChange<BlockListUiState> {
 data class BlockListUiState(
     val isLoading: Boolean = true,
     val blackList: List<Block> = emptyList(),
-    val whiteList: List<Block> = emptyList(),
 ) : UiState
 
 sealed interface BlockListUiEvent : UiEvent {

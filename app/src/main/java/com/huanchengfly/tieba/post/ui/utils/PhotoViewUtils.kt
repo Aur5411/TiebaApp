@@ -46,6 +46,49 @@ fun getPhotoViewData(
     )
 }
 
+/**
+ * 楼中楼（SubPost）图片用。SubPostList proto 里没有 tid / from_forum，
+ * 所以 forumId / forumName / threadId 需要由调用方从外层帖子上下文传进来，
+ * postId 用楼中楼自身 id。
+ */
+fun getPhotoViewData(
+    forumId: Long,
+    forumName: String,
+    threadId: Long,
+    postId: Long,
+    picId: String,
+    picUrl: String,
+    originUrl: String,
+    showOriginBtn: Boolean,
+    originSize: Int,
+    seeLz: Boolean = false
+): PhotoViewData {
+    val picItem = PicItem(
+        picId = picId,
+        picIndex = 1,
+        url = picUrl,
+        originUrl = originUrl,
+        showOriginBtn = showOriginBtn,
+        originSize = originSize,
+        postId = postId
+    )
+    return PhotoViewData(
+        // forumId 无效时不带 LoadPicPageData，只看单图，避免用 0 去请求图片列表
+        data = if (forumId != 0L) LoadPicPageData(
+            forumId = forumId,
+            forumName = forumName,
+            threadId = threadId,
+            postId = postId,
+            objType = "pb",
+            picId = picId,
+            picIndex = 1,
+            seeLz = seeLz,
+            originUrl = originUrl,
+        ) else null,
+        picItems = persistentListOf(picItem),
+    )
+}
+
 fun getPhotoViewData(
     threadInfo: ThreadInfo,
     index: Int

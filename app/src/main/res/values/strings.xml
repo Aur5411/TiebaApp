@@ -45,9 +45,13 @@
     <string name="toast_add_thread_failed">发帖失败</string>
     <string name="toast_reply_success">回贴成功，经验 +%s</string>
     <string name="title_black_list">黑名单</string>
-    <string name="title_white_list">白名单</string>
     <string name="title_add_black">添加黑名单</string>
-    <string name="title_add_white">添加白名单</string>
+    <string name="tip_add_black">可输入用户名或 UID，添加后该用户的帖子和评论将被屏蔽</string>
+    <string name="title_keyword_list">屏蔽词</string>
+    <string name="title_add_keyword">添加屏蔽词</string>
+    <string name="tip_add_keyword">可用空格分隔多个屏蔽词，含有屏蔽词的评论会被自动隐藏（只对评论生效，不影响帖子）</string>
+    <string name="title_keyword_list_manage">屏蔽词管理</string>
+    <string name="summary_keyword_list_manage">自动隐藏包含屏蔽词的评论</string>
     <string name="title_ban_interaction">拉黑范围</string>
     <string name="text_ban_interaction_follow">禁止TA关注我</string>
     <string name="text_ban_interaction_interact">禁止TA互动</string>
@@ -85,6 +89,7 @@
     <string name="title_unfollow">取消关注</string>
     <string name="tip_no_intro">这个人很懒，什么都没有写</string>
     <string name="toast_add_success">添加成功</string>
+    <string name="toast_user_already_in_black_list">此用户已在黑名单中</string>
     <string name="toast_unlike_success">取消关注成功</string>
     <string name="toast_unlike_failed">取消关注失败 %1$s</string>
     <string name="content_top">置顶</string>
@@ -573,7 +578,7 @@
     <string name="title_sub_posts_header">%d 条回复</string>
     <string name="pull_to_load">继续上拉加载</string>
     <string name="release_to_load">松开加载</string>
-    <string name="title_block_list">屏蔽词管理</string>
+    <string name="title_block_list">黑名单</string>
     <string name="settings_hide_blocked_content">彻底隐藏被屏蔽的内容</string>
     <string name="settings_block_video_summary">隐藏动态页面和吧页面的所有视频贴</string>
     <string name="settings_show_followed_only">只推荐已关注的吧</string>
@@ -640,7 +645,6 @@
     <string name="title_profile_concern_forums_tab">关注吧 %s</string>
     <string name="title_user_hide_post">该用户已隐藏动态</string>
     <string name="menu_add_user_to_black_list">添加到黑名单</string>
-    <string name="menu_add_user_to_white_list">添加到白名单</string>
     <string name="ban_interact">拉黑</string>
     <string name="toast_ban_interact_failed">更改拉黑配置失败 %1$s</string>
     <string name="btn_block">屏蔽选项</string>

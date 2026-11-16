@@ -37,6 +37,7 @@ import com.huanchengfly.tieba.post.removeAt
 import com.huanchengfly.tieba.post.repository.EmptyDataException
 import com.huanchengfly.tieba.post.repository.PbPageRepository
 import com.huanchengfly.tieba.post.ui.common.PbContentRender
+import com.huanchengfly.tieba.post.utils.BlockManager.autoHidden
 import com.huanchengfly.tieba.post.utils.BlockManager.shouldBlock
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.collections.immutable.ImmutableList
@@ -1306,6 +1307,7 @@ object ThreadSortType {
 data class PostItemData(
     val post: ImmutableHolder<Post>,
     val blocked: Boolean = post.get { shouldBlock() },
+    val hidden: Boolean = post.get { autoHidden() },
     val contentRenders: ImmutableList<PbContentRender> = post.get { this.contentRenders },
     val subPosts: ImmutableList<SubPostItemData> = post.get { this.subPosts },
 )
@@ -1315,6 +1317,7 @@ data class SubPostItemData(
     val subPost: ImmutableHolder<SubPostList>,
     val subPostContent: AnnotatedString,
     val blocked: Boolean = subPost.get { shouldBlock() },
+    val hidden: Boolean = subPost.get { autoHidden() },
 ) {
     val id: Long
         get() = subPost.get { id }

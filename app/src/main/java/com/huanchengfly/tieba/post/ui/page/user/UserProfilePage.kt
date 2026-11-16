@@ -429,35 +429,31 @@ private fun UserProfileToolbar(
                     menuContent = {
                         DropdownMenuItem(
                             onClick = {
-                                BlockManager.addBlockAsync(
-                                    Block(
-                                        category = Block.CATEGORY_BLACK_LIST,
-                                        type = Block.TYPE_USER,
-                                        username = it.get { name }.ifEmpty { it.get { nameShow } },
-                                        uid = it.get { id }.toString()
+                                val userId = it.get { id }
+                                val userName = it.get { name }.ifEmpty { it.get { nameShow } }
+                                if (
+                                    BlockManager.containsUser(
+                                        userId = userId,
+                                        userName = userName,
                                     )
                                 ) {
-                                    if (it) context.toastShort(R.string.toast_add_success)
+                                    // 已经在黑名单里了，不再重复写入，给个轻提示
+                                    context.toastShort(R.string.toast_user_already_in_black_list)
+                                } else {
+                                    BlockManager.addBlockAsync(
+                                        Block(
+                                            category = Block.CATEGORY_BLACK_LIST,
+                                            type = Block.TYPE_USER,
+                                            username = userName,
+                                            uid = userId.toString()
+                                        )
+                                    ) { success ->
+                                        if (success) context.toastShort(R.string.toast_add_success)
+                                    }
                                 }
                             }
                         ) {
                             Text(text = stringResource(id = R.string.menu_add_user_to_black_list))
-                        }
-                        DropdownMenuItem(
-                            onClick = {
-                                BlockManager.addBlockAsync(
-                                    Block(
-                                        category = Block.CATEGORY_WHITE_LIST,
-                                        type = Block.TYPE_USER,
-                                        username = it.get { name }.ifEmpty { it.get { nameShow } },
-                                        uid = it.get { id }.toString()
-                                    )
-                                ) {
-                                    if (it) context.toastShort(R.string.toast_add_success)
-                                }
-                            }
-                        ) {
-                            Text(text = stringResource(id = R.string.menu_add_user_to_white_list))
                         }
                         if (account != null) {
                             DropdownMenuItem(

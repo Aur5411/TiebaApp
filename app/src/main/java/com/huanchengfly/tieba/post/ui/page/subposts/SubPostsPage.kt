@@ -51,6 +51,7 @@ import com.huanchengfly.tieba.post.arch.collectPartialAsState
 import com.huanchengfly.tieba.post.arch.onEvent
 import com.huanchengfly.tieba.post.arch.pageViewModel
 import com.huanchengfly.tieba.post.arch.wrapImmutable
+import com.huanchengfly.tieba.post.ui.common.PicContentRender
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import com.huanchengfly.tieba.post.ui.common.theme.compose.threadBottomBar
 import com.huanchengfly.tieba.post.ui.page.LocalNavigator
@@ -86,6 +87,7 @@ import com.huanchengfly.tieba.post.utils.DateTimeUtils
 import com.huanchengfly.tieba.post.utils.StringUtil
 import com.huanchengfly.tieba.post.utils.TiebaUtil
 import com.huanchengfly.tieba.post.utils.appPreferences
+import com.huanchengfly.tieba.post.ui.utils.getPhotoViewData
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import com.ramcosta.composedestinations.spec.DestinationStyleBottomSheet
@@ -504,8 +506,13 @@ internal fun SubPostsContent(
                         items = subPosts,
                         key = { _, subPost -> subPost.id }
                     ) { _, item ->
+                        // 命中屏蔽词的楼中楼直接不渲染
+                        if (item.hidden) return@itemsIndexed
                         SubPostItem(
                             item = item,
+                            forumId = forum?.get { id } ?: forumId,
+                            forumName = forum?.get { name } ?: "",
+                            threadId = threadId,
                             canDelete = { it.author_id == account?.uid?.toLongOrNull() || it.author?.id == account?.uid?.toLongOrNull() || thread?.get { author?.id } ==  account?.uid?.toLongOrNull() },
                             threadAuthorId = thread?.get { author?.id },
                             onUserClick = {
@@ -574,6 +581,9 @@ private fun getDescText(
 @Composable
 private fun SubPostItem(
     item: SubPostItemData,
+    forumId: Long = 0L,
+    forumName: String = "",
+    threadId: Long = 0L,
     threadAuthorId: Long? = null,
     canDelete: (SubPostList) -> Boolean = { false },
     onUserClick: (User) -> Unit = {},
@@ -587,6 +597,33 @@ private fun SubPostItem(
     val navigator = LocalNavigator.current
     val account = LocalAccount.current
     val coroutineScope = rememberCoroutineScope()
+    // 楼中楼的 renders 是裸的 subPost.content.renders，不带 photoViewData，
+    // 导致图片点不动（点击会被外层卡片的「回复」吃掉）。这里补上，点击即可进看图页。
+    val renders = remember(contentRenders, forumId, forumName, threadId, subPost) {
+        if (forumId == 0L) {
+            contentRenders
+        } else {
+            contentRenders.map { render ->
+                if (render is PicContentRender && render.photoViewData == null) {
+                    render.copy(
+                        photoViewData = getPhotoViewData(
+                            forumId = forumId,
+                            forumName = forumName,
+                            threadId = threadId,
+                            postId = subPost.get { id },
+                            picId = render.picId,
+                            picUrl = render.picUrl,
+                            originUrl = render.originUrl,
+                            showOriginBtn = render.showOriginBtn,
+                            originSize = render.originSize,
+                        )
+                    )
+                } else {
+                    render
+                }
+            }
+        }
+    }
     val author = remember(subPost) { subPost.get { author }?.wrapImmutable() }
     val hasAgreed = remember(subPost) {
         subPost.get { agree?.hasAgree == 1 }
@@ -706,7 +743,7 @@ private fun SubPostItem(
                             .padding(start = Sizes.Small + 8.dp)
                             .fillMaxWidth()
                     ) {
-                        contentRenders.fastForEach { it.Render() }
+                        renders.fastForEach { it.Render() }
                     }
                 }
             )
