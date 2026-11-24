@@ -4,7 +4,7 @@
 
 **一个第三方百度贴吧 Android 客户端**
 
-基于 [TiebaLite](https://github.com/HuanCheng65/TiebaLite) 4.0-dev 分支二次开发，使用 Jetpack Compose 构建，回归 Material Design 3 视觉。
+基于 [TiebaLite](https://github.com/HuanCheng65/TiebaLite) 4.0-dev 分支二次开发，使用 Jetpack Compose 构建，以 Compose Material 2 组件库**仿** Material Design 3 视觉（未引入 material3 依赖）。
 
 [![License](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](./LICENSE)
 ![Platform](https://img.shields.io/badge/Platform-Android-3DDC84.svg)
@@ -24,8 +24,8 @@
 **贴吧 Lite（TiebaApp）** 是一个**非官方**的百度贴吧移动客户端，专注于三件事：
 
 1. **干净** —— 无开屏广告、无信息流广告、无推送骚扰；
-2. **还原** —— 内容与功能对齐官方客户端，界面按 Material Design 3 重新设计；
-3. **轻快** —— 纯 Compose 实现，启动快、滑动跟手。
+2. **还原** —— 内容与功能对齐官方客户端，界面仿 Material Design 3 重新设计；
+3. **轻快** —— 主体 Compose 实现（少量页面与控件仍为 View/XML），启动快、滑动跟手。
 
 > ⚠️ **声明**：本软件与百度公司无任何关联，为非官方第三方客户端。所有贴吧内容版权归百度及原作者所有。
 > **本软件及源码仅供学习交流使用，严禁用于商业用途。**
@@ -78,7 +78,7 @@
 
 ### 其他
 
-- 深浅色主题、动态取色（MD3 Dynamic Color）
+- 深浅色主题、系统取色（Android 12+ 读取系统壁纸取色，自研 TonalPalette 映射到主题色板，并非 Material You 官方 DynamicColorScheme）
 - 顶栏着色开关
 - 权限申请**直接拉起系统原生弹窗**，不经过二次确认中转
 - 设置页内置**感谢名单**
@@ -90,12 +90,12 @@
 | 类别 | 选型 |
 |---|---|
 | 语言 | Kotlin 2.3.21 |
-| UI | Jetpack Compose（BOM 2026.05.01）+ Material Design 3 |
-| 导航 | Compose Destinations 1.11.9 + Navigation Compose 2.9.8 |
+| UI | Jetpack Compose（BOM 2026.05.01）+ Compose Material 2（仿 MD3 视觉） |
+| 导航 | Compose Destinations 1.11.9 + androidx.navigation（经 Hilt 传递引入） |
 | 依赖注入 | Hilt 2.58 + KSP 2.3.8 |
 | 网络 | OkHttp 5.3.2 + Retrofit 3.0.0 |
 | 序列化 | kotlinx.serialization 1.11.0 + **Wire 6.4.0**（Protocol Buffers） |
-| 图片 | Glide 5.0.7 + Sketch 3.3.2 |
+| 图片 | Sketch 3.3.2（主）+ Glide 5.0.7（仅个别页面） |
 | 本地存储 | Room 2.7.1 |
 | 视频 | AndroidX Media3 1.10.1 |
 | 动画 | Lottie 6.7.1 |
@@ -136,7 +136,8 @@
 
 > 首次构建需联网拉取依赖；若本地已有 Gradle 缓存，可加 `--offline` 加速。
 
---
+---
+
 ## 开源协议
 
 本项目基于 **GNU General Public License v3.0（GPL-3.0）** 发布，完整条款见 [LICENSE](./LICENSE)。
@@ -182,7 +183,8 @@ GNU General Public License for more details.
 | 项目 | 作者 | 说明 |
 |---|---|---|
 | [Starry-OvO/aiotieba](https://github.com/Starry-OvO/aiotieba) | [@Starry-OvO](https://github.com/Starry-OvO) | 异步贴吧客户端库，接口行为的重要参考 |
-| [n0099/tbclient.protobuf](https://github.com/n0099/tbclient.protobuf) | [@n0099](https://github.com/n0099) | 百度贴吧 Protobuf 
+| [n0099/tbclient.protobuf](https://github.com/n0099/tbclient.protobuf) | [@n0099](https://github.com/n0099) | 百度贴吧 Protobuf 协议定义与抓包整理 |
+
 ### 社区
 
 感谢所有实测反馈、提交 Issue 与建议的用户 —— 每一个 bug 报告都在让这个客户端变得更好。
