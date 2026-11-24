@@ -3,43 +3,60 @@ package com.huanchengfly.tieba.post.utils
 import android.content.Context
 import android.os.Looper
 import android.text.TextUtils
+import android.util.Log
 import com.github.panpf.sketch.sketch
 import java.io.File
 import java.math.BigDecimal
 import kotlin.concurrent.thread
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * 图片缓存工具类
  * Created by Trojx on 2016/10/10 0010.
  */
 object ImageCacheUtil {
+    private const val TAG = "ImageCacheUtil"
+
+    // 旧版 Glide 的磁盘缓存目录名，仅用于清理历史残留
     const val DEFAULT_DISK_CACHE_DIR = "image_manager_disk_cache"
 
     /**
-     * 清除图片磁盘缓存
+     * 清除图片磁盘缓存。主线程调用时切到后台线程执行，结果不上报；
+     * 需要结果请用 [clearImageDiskCacheBlocking] 或 [clearImageAllCache]。
      */
     fun clearImageDiskCache(context: Context) {
-        try {
-            if (Looper.myLooper() == Looper.getMainLooper()) {
-                thread {
-                    context.sketch
-                        .downloadCache
-                        .clear()
-                    context.sketch
-                        .resultCache
-                        .clear()
-                }
-            } else {
-                context.sketch
-                    .downloadCache
-                    .clear()
-                context.sketch
-                    .resultCache
-                    .clear()
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            thread(name = "clear-image-cache") { clearImageDiskCacheBlocking(context) }
+        } else {
+            clearImageDiskCacheBlocking(context)
         }
+    }
+
+    /**
+     * 同步清除图片磁盘缓存（不要在主线程序列上直接调用），返回是否全部清除成功。
+     */
+    fun clearImageDiskCacheBlocking(context: Context): Boolean {
+        var success = true
+        try {
+            context.sketch.downloadCache.clear()
+        } catch (e: Throwable) {
+            Log.w(TAG, "failed to clear sketch download cache", e)
+            success = false
+        }
+        try {
+            context.sketch.resultCache.clear()
+        } catch (e: Throwable) {
+            Log.w(TAG, "failed to clear sketch result cache", e)
+            success = false
+        }
+        // 旧版本把 Sketch 缓存放在外部存储，属主错配时那里可能完全不可写，
+        // 顺手做一次改名/删除，让「清除缓存」对老用户也真正生效。
+        if (!SketchCacheUtil.cleanupLegacyExternal(context)) {
+            Log.w(TAG, "legacy sketch cache directory is still present and not writable")
+            success = false
+        }
+        return success
     }
 
     /**
@@ -58,15 +75,29 @@ object ImageCacheUtil {
     }
 
     /**
-     * 清除图片所有缓存
+     * 清除图片所有缓存，返回是否全部清除成功。
+     * 内部会自己切到后台线程，可直接在主线程调用。
      */
-    fun clearImageAllCache(context: Context) {
-        clearImageDiskCache(context)
-        clearImageMemoryCache(context)
-        val imageExternalCacheDir =
-            context.externalCacheDir.toString() + File.separator + DEFAULT_DISK_CACHE_DIR
-        deleteFolderFile(imageExternalCacheDir, false)
-        deleteFolderFile(context.cacheDir.toString() + File.separator + ".shareTemp", false)
+    suspend fun clearImageAllCache(context: Context): Boolean = withContext(Dispatchers.IO) {
+        var success = clearImageDiskCacheBlocking(context)
+        withContext(Dispatchers.Main) { clearImageMemoryCache(context) }
+        val legacyDirs = listOfNotNull(
+            legacyExternalDir(context, DEFAULT_DISK_CACHE_DIR),
+            File(context.cacheDir, ".shareTemp"),
+        )
+        legacyDirs.forEach { dir ->
+            if (dir.exists() && !deleteFolderFile(dir.absolutePath, false)) {
+                Log.w(TAG, "failed to clear ${dir.path}")
+                success = false
+            }
+        }
+        success
+    }
+
+    private fun legacyExternalDir(context: Context, name: String): File? = try {
+        context.externalCacheDir?.let { File(it, name) }
+    } catch (e: Throwable) {
+        null
     }
 
     /**
@@ -120,27 +151,29 @@ object ImageCacheUtil {
      * @param filePath       filePath
      * @param deleteThisPath deleteThisPath
      */
-    private fun deleteFolderFile(filePath: String, deleteThisPath: Boolean) {
-        if (!TextUtils.isEmpty(filePath)) {
-            try {
-                val file = File(filePath)
-                if (file.isDirectory) {
-                    file.listFiles()?.forEach {
-                        deleteFolderFile(it.absolutePath, true)
-                    }
+    private fun deleteFolderFile(filePath: String, deleteThisPath: Boolean): Boolean {
+        if (TextUtils.isEmpty(filePath)) return true
+        return try {
+            val file = File(filePath)
+            var success = true
+            if (file.isDirectory) {
+                file.listFiles()?.forEach {
+                    if (!deleteFolderFile(it.absolutePath, true)) success = false
                 }
-                if (deleteThisPath) {
-                    if (!file.isDirectory) {
-                        file.delete()
-                    } else {
-                        if (file.listFiles().isNullOrEmpty()) {
-                            file.delete()
-                        }
-                    }
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
             }
+            if (deleteThisPath) {
+                if (!file.isDirectory) {
+                    if (!file.delete() && file.exists()) success = false
+                } else {
+                    if (file.listFiles().isNullOrEmpty()) {
+                        if (!file.delete() && file.exists()) success = false
+                    }
+                }
+            }
+            success
+        } catch (e: Exception) {
+            Log.w(TAG, "failed to delete $filePath", e)
+            false
         }
     }
 

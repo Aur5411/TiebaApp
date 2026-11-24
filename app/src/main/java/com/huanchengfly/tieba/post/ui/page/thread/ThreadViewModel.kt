@@ -21,6 +21,7 @@ import com.huanchengfly.tieba.post.api.models.protos.renders
 import com.huanchengfly.tieba.post.api.models.protos.subPosts
 import com.huanchengfly.tieba.post.api.models.protos.updateAgreeStatus
 import com.huanchengfly.tieba.post.api.models.protos.updateCollectStatus
+import com.huanchengfly.tieba.post.api.models.protos.updatePollStatus
 import com.huanchengfly.tieba.post.api.retrofit.exception.TiebaUnknownException
 import com.huanchengfly.tieba.post.api.retrofit.exception.getErrorCode
 import com.huanchengfly.tieba.post.api.retrofit.exception.getErrorMessage
@@ -107,6 +108,16 @@ class ThreadViewModel @Inject constructor() :
             is ThreadPartialChange.DeleteThread.Success -> CommonUiEvent.NavigateUp
             is ThreadPartialChange.DeleteThread.Failure -> CommonUiEvent.Toast(
                 App.INSTANCE.getString(R.string.toast_delete_failure, partialChange.errorMessage)
+            )
+
+            // 投票：以前这两个分支落到 else -> null，用户投完票没有任何反馈，
+            // 加上票数不变，看起来就是「点了没反应」。
+            is ThreadPartialChange.PollThread.Success -> CommonUiEvent.Toast(
+                App.INSTANCE.getString(R.string.toast_poll_success)
+            )
+
+            is ThreadPartialChange.PollThread.Failure -> CommonUiEvent.Toast(
+                App.INSTANCE.getString(R.string.toast_poll_failure, partialChange.errorMessage)
             )
 
             else -> null
@@ -439,17 +450,36 @@ class ThreadViewModel @Inject constructor() :
                     )
                 }
 
-        fun ThreadUiIntent.PollThread.producePartialChange(): Flow<ThreadPartialChange.PollThread> =
-            TiebaApi.getInstance()
+        fun ThreadUiIntent.PollThread.producePartialChange(): Flow<ThreadPartialChange.PollThread> {
+            val polledOptionIds = options.split(",")
+                .mapNotNull { it.trim().toIntOrNull() }
+            return TiebaApi.getInstance()
                 .addPollPostProtobuf(
                     forumId,
                     threadId,
                     options
                 )
-                .map<AddPollPostReponse, ThreadPartialChange.PollThread> {
-                    ThreadPartialChange.PollThread.Success(
-                        true
-                    )
+                .map<AddPollPostReponse, ThreadPartialChange.PollThread> { response ->
+                    // addPollPost 的错误码可能落在 data(1) 里，而 ProtoFailureResponseInterceptor
+                    // 只认字段 1 的 ProtoCommonResponse.error，所以这里再兜一层：
+                    // 否则服务端拒绝投票时会走到 Success 分支，用户看到「已参与投票」但其实没投上。
+                    val dataErrorCode = response.data_?.error_code ?: 0
+                    val errorCode = dataErrorCode.takeIf { it != 0 }
+                        ?: response.error?.error_code?.takeIf { it != 0 }
+                    if (errorCode != null) {
+                        ThreadPartialChange.PollThread.Failure(
+                            false,
+                            errorCode,
+                            response.data_?.error_msg?.takeIf { it.isNotEmpty() }
+                                ?: response.error?.error_msg?.takeIf { it.isNotEmpty() }
+                                ?: App.INSTANCE.getString(R.string.error_unknown)
+                        )
+                    } else {
+                        ThreadPartialChange.PollThread.Success(
+                            isPolled = true,
+                            polledOptionIds = polledOptionIds
+                        )
+                    }
                 }
                 .catch {
                     emit(
@@ -460,6 +490,7 @@ class ThreadViewModel @Inject constructor() :
                         )
                     )
                 }
+        }
 
         fun ThreadUiIntent.AgreePost.producePartialChange(): Flow<ThreadPartialChange.AgreePost> =
             TiebaApi.getInstance()
@@ -1142,11 +1173,15 @@ sealed interface ThreadPartialChange : PartialChange<ThreadUiState> {
 
                 is Success -> oldState.copy(
                     threadInfo = oldState.threadInfo?.getImmutable {
-                        this.copy(
-                            poll_info = this.poll_info?.copy(
-                                is_polled = if (isPolled) 1 else 0
+                        if (isPolled) {
+                            // 投票成功：本地把票数、总票数、参与人数一起加上去，
+                            // 两个 poll_info 字段都要改（UI 优先读 origin_thread_info 那份）
+                            updatePollStatus(polledOptionIds)
+                        } else {
+                            copy(
+                                poll_info = poll_info?.copy(is_polled = 0)
                             )
-                        )
+                        }
                     }
                 )
 
@@ -1155,7 +1190,8 @@ sealed interface ThreadPartialChange : PartialChange<ThreadUiState> {
         }
 
         data class Success(
-            val isPolled: Boolean
+            val isPolled: Boolean,
+            val polledOptionIds: Collection<Int> = emptyList()
         ) : PollThread()
 
         data class Failure(

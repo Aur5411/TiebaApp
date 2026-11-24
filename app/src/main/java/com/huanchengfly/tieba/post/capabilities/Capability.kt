@@ -56,6 +56,9 @@ enum class Capability(
     /** 点赞 / 点踩 */
     AGREE(write = true),
 
+    /** 参与投票 */
+    POLL(write = true),
+
     /** 吧务操作（删帖 / 封禁 / 加精等） */
     BAWU(write = true),
 

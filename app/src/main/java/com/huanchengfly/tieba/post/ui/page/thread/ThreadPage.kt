@@ -103,6 +103,7 @@ import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.huanchengfly.tieba.post.App
+import com.huanchengfly.tieba.post.capabilities.Capability
 import com.huanchengfly.tieba.post.R
 import com.huanchengfly.tieba.post.api.TiebaApi
 import com.huanchengfly.tieba.post.api.booleanToString
@@ -1004,10 +1005,14 @@ fun ThreadPage(
 
         val currentTime = (System.currentTimeMillis() / 1000).toInt()
         val isTimeExpired = pollInfo.end_time in 1..currentTime
+        // 投票属于写操作，安全模式开启时会被 SafeModeInterceptor 在网络层拦掉。
+        // 以前这里不判断，用户点提交后请求被拦截、又没有失败提示，表现就是「点了没反应」。
+        val isSafeModeBlocked = Capability.POLL.isBlockedBySafeMode
         // 投票结果与票数始终可见（未登录/游客态同样可见，与官方客户端一致）；
-        // 只有「已登录 + 未投过 + 未截止 + 状态正常」时才允许选择并提交投票。
+        // 只有「已登录 + 未投过 + 未截止 + 状态正常 + 安全模式关闭」时才允许选择并提交投票。
         val isLoggedIn = LocalAccount.current != null
-        val canVote = isLoggedIn && pollInfo.is_polled != 1 && !isTimeExpired && pollInfo.status == 0
+        val canVote = isLoggedIn && pollInfo.is_polled != 1 && !isTimeExpired &&
+                pollInfo.status == 0 && !isSafeModeBlocked
         // total_poll 可能为 0（服务端未下发或无人参与），直接相除会得到 NaN
         val totalPoll = pollInfo.total_poll
 
@@ -1177,6 +1182,7 @@ fun ThreadPage(
                         text = when {
                             isTimeExpired -> "投票已截止"
                             pollInfo.is_polled == 1 -> "已参与投票"
+                            isSafeModeBlocked -> "安全模式下不可投票"
                             else -> "登录后可参与投票"
                         },
                         fontSize = 12.sp,

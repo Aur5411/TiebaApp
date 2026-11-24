@@ -203,13 +203,35 @@ object EmoticonManager {
         }.getOrNull() ?: EmoticonCache()
     }
 
+    private val resolvedEmoticonCacheDir: File by lazy { resolveEmoticonCacheDir() }
+
+    /**
+     * 表情缓存目录。
+     *
+     * 历史版本放在 `externalCacheDir/emoticon`，外部存储属主错配（保留数据卸载、跨分支
+     * 覆盖安装、备份恢复）时会变成不可写甚至不可读，导致表情图全部加载失败。
+     * 外部目录确实可写时继续沿用（老用户不必重新下载），否则回落到内部 `cacheDir`。
+     */
+    private fun resolveEmoticonCacheDir(): File {
+        val context = getContext()
+        val external = try {
+            context.externalCacheDir?.let { File(it, "emoticon") }
+        } catch (e: Throwable) {
+            null
+        }
+        if (external != null && external.isDirectory && SketchCacheUtil.isWritable(external)) {
+            return external
+        }
+        return File(context.cacheDir, "emoticon").apply { mkdirs() }
+    }
+
     private fun getEmoticonCacheDir(): File {
-        return File(getContext().externalCacheDir ?: getContext().cacheDir, "emoticon").apply {
-            if (exists() && isFile) {
-                delete()
-                mkdirs()
-            } else if (!exists()) {
-                mkdirs()
+        return resolvedEmoticonCacheDir.also {
+            if (it.exists() && it.isFile) {
+                it.delete()
+                it.mkdirs()
+            } else if (!it.exists()) {
+                it.mkdirs()
             }
         }
     }

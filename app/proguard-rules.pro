@@ -74,12 +74,12 @@
 }
 
 #assume no side effects:删除android.util.Log输出的日志
+# 只抹掉 v/d/i，保留 w/e：release 包出问题时（例如缓存目录不可写导致图片全挂）
+# 必须还能在 logcat 里看到告警和错误，否则现场完全不可诊断。
 -assumenosideeffects class android.util.Log {
     public static *** v(...);
     public static *** d(...);
     public static *** i(...);
-    public static *** w(...);
-    public static *** e(...);
 }
 
 # WebView

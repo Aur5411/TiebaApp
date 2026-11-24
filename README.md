@@ -105,7 +105,7 @@
 |---|---|
 | 包名 | `com.tieba` |
 | minSdk / targetSdk / compileSdk | 23 / 36 / 36 |
-| 当前版本 | 1.7.7 (versionCode 32) |
+| 当前版本 | 1.8.6 (versionCode 40) |
 
 ### 关于接口
 

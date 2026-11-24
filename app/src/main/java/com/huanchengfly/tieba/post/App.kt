@@ -36,6 +36,7 @@ import com.github.panpf.sketch.fetch.FetchResult
 import com.github.panpf.sketch.http.OkHttpStack
 import com.github.panpf.sketch.request.PauseLoadWhenScrollingDrawableDecodeInterceptor
 import com.github.panpf.sketch.request.internal.RequestContext
+import com.github.panpf.sketch.util.Logger
 import com.huanchengfly.tieba.post.components.ClipBoardLinkDetector
 import com.huanchengfly.tieba.post.components.OAIDGetter
 
@@ -48,6 +49,7 @@ import com.huanchengfly.tieba.post.utils.BlockManager
 import com.huanchengfly.tieba.post.utils.ClientUtils
 import com.huanchengfly.tieba.post.utils.EmoticonManager
 import com.huanchengfly.tieba.post.utils.SharedPreferencesUtil
+import com.huanchengfly.tieba.post.utils.SketchCacheUtil
 import com.huanchengfly.tieba.post.utils.ThemeUtil
 import com.huanchengfly.tieba.post.utils.Util
 import com.huanchengfly.tieba.post.utils.appPreferences
@@ -775,6 +777,18 @@ class App : Application(), SketchFactory {
 
     @SuppressLint("NewApi")
     override fun createSketch(): Sketch = Sketch.Builder(this).apply {
+        // Sketch 默认把磁盘缓存建在 externalCacheDir/sketch3，外部存储属主错配时
+        // DiskCache 初始化失败会让所有图片请求连发都发不出去，这里显式落到内部 cacheDir，
+        // 并套一层失败降级：磁盘缓存出任何问题都只丢缓存，图片照常从网络加载。
+        downloadCache(SketchCacheUtil.downloadCache(this@App))
+        resultCache(SketchCacheUtil.resultCache(this@App))
+        // 老用户外部目录里的残留可能不可写，后台尽力清掉，失败不影响启动。
+        thread(name = "sketch-legacy-cache-cleaner") {
+            SketchCacheUtil.cleanupLegacyExternal(this@App)
+        }
+        // release 包把 Log.v/d/i 优化掉了，把 Sketch 内部日志同步到 WARNING 级别，
+        // 保证缓存/解码异常仍能出现在 logcat 里。
+        logger(Logger(Logger.Level.WARNING))
         httpStack(OkHttpStack.Builder().apply {
             userAgent(System.getProperty("http.agent"))
         }.build())

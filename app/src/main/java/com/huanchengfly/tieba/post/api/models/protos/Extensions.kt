@@ -115,6 +115,51 @@ fun ThreadInfo.updateCollectStatus(
     this
 }
 
+/**
+ * 投票成功后本地刷新投票数据。
+ *
+ * 服务端的 addPollPost 只返回一个空壳 result，不会把最新的票数下发回来，
+ * 而 UI 直接渲染 [PollInfo.total_poll] / [PollOption.num] / [PollInfo.total_num]，
+ * 所以必须在这里做一次本地增量，否则用户投完票看到的还是投票前的数字
+ * （之前只改了 is_polled，导致「已参与投票」文案生效但票数一动不动）。
+ */
+fun PollInfo.updatePollStatus(
+    polledOptionIds: Collection<Int>
+): PollInfo {
+    val ids = polledOptionIds.toSet()
+    if (ids.isEmpty()) {
+        return copy(is_polled = 1)
+    }
+    val newOptions = options.map { option ->
+        if (ids.contains(option.id)) option.copy(num = option.num + 1) else option
+    }
+    return copy(
+        is_polled = 1,
+        options = newOptions,
+        // 多选时一次提交会加多票，参与人数只 +1（一个人）
+        total_poll = total_poll + ids.size,
+        total_num = total_num + 1
+    )
+}
+
+/**
+ * 投票成功后刷新整条主题的投票数据。
+ *
+ * 注意 [ThreadInfo.poll_info] 与 [ThreadInfo.origin_thread_info]?.poll_info 是两个字段，
+ * 而 `resolvePollInfo` 优先使用 origin_thread_info 里的那份，
+ * 只改 poll_info 的话票数区依旧不会变。
+ */
+fun ThreadInfo.updatePollStatus(
+    polledOptionIds: Collection<Int>
+): ThreadInfo = copy(
+    poll_info = poll_info?.updatePollStatus(polledOptionIds),
+    origin_thread_info = origin_thread_info?.let { origin ->
+        origin.copy(
+            poll_info = origin.poll_info?.updatePollStatus(polledOptionIds) ?: origin.poll_info
+        )
+    }
+)
+
 fun Post.updateAgreeStatus(
     hasAgree: Int
 ) = if (agree != null) {
